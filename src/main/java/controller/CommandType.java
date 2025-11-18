@@ -1,0 +1,29 @@
+package controller;
+
+/**
+ * Represents the types of commands supported by the calendar application.
+ *  (create, edit, print, show status, export, exit).
+ */
+public enum CommandType {
+  CREATE_SINGLE_EVENT,
+  CREATE_ALL_DAY_EVENT,
+  CREATE_SERIES_UNTIL,
+  CREATE_SERIES_REPEATING_N_TIMES,
+  EDIT_SINGLE_EVENT,
+  EDIT_EVENTS,
+  EDIT_SERIES,
+  PRINT_EVENTS_ON,
+  PRINT_EVENTS_FROM,
+  SHOW_STATUS,
+  EXPORT_CALENDAR_CSV,
+  EXPORT_CALENDAR_ICAL,
+  CREATE_CALENDAR,
+  EDIT_CALENDAR_NAME,
+  EDIT_CALENDAR_ZONE,
+  SET_CONTEXT,
+  COPY_SINGLE_EVENT,
+  COPY_EVENTS_ON_DATE,
+  COPY_EVENTS_BETWEEN_DATES,
+  EXIT,
+  UNKNOWN
+}

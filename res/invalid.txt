@@ -1,0 +1,7 @@
+create calendar --name fall2025 --timezone invalid/New_York
+create event trial from 2025-10-27 to 2025-10-27T12:30 repeats MWF until 2025-11-21
+create event trial from 2025-10-27 to 2025-10-27T12:30 repeats XYZ until 2025-11-21
+create event trial from 2025-11-03T12:00 to 2025-11-03T14:30
+create event trial from 2025-11-03T12:00 to 2025-11-03T14:30
+edit events subject abc from 2025-11-03T12:00 with trial2
+exit

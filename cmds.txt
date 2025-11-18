@@ -1,0 +1,10 @@
+create calendar --name study --timezone Asia/Kolkata
+use calendar --name study
+create event trial from 2025-11-03T12:00 to 2025-11-03T14:30
+create calendar --name s2  --timezone Asia/Kolkata
+copy events on 2025-11-03 --target s2 to 2025-11-04
+edit calendar --name study --property name study2
+use calendar --name s2
+print events on 2025-11-04
+print events on 2025-11-03
+copy event trial on 2025-11-03T12:00 --target study2 to 2025-11-05T13:00

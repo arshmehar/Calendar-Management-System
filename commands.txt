@@ -1,0 +1,32 @@
+create calendar --name fall2025 --timezone America/New_York
+use calendar --name fall2025
+create event "CalendarDesign class" from 2025-11-01T13:00 to 2025-11-01T18:30 repeats TSUWF for 16 times
+create event "Lunch meeting" from 2025-11-01T12:00 to 2025-11-01T12:30
+create calendar --name Spring2026 --timezone America/New_York
+copy events on 2025-11-01 --target Spring2026 to 2026-01-15
+edit calendar --name Spring2026 --property name Fall2026
+edit calendar --name Fall2026 --property timezone America/Los_Angeles
+use calendar --name "Fall2026"
+create event trial from 2025-11-03T12:00 to 2025-11-03T14:30
+print events on 2026-01-15
+create event dbms from 2025-10-27T12:00 to 2025-10-27T12:30 repeats MWF until 2025-11-21
+create event dbms from 2025-11-03T12:00 to 2025-11-03T14:30
+print events from 2025-10-25T12:00 to 2025-11-25T12:00
+edit events subject dbms from 2025-11-03T12:00 with webdev
+edit events subject webdev from 2025-11-10T12:00 with Meeting
+edit events location Meeting from 2025-11-10T12:00 with snell
+edit events description Meeting from 2025-11-10T12:00 with "Meeting at office"
+create event "Java class" from 2025-11-01T16:00 to 2025-11-03T20:30
+create event "PDP class" from 2025-11-18T16:00 to 2025-11-18T20:30
+create calendar --name Summer2025 --timezone America/Los_Angeles
+copy events on 2025-11-18 --target Summer2025 to 2025-12-18
+edit events location "PDP class" from 2025-11-18T16:00 with "churchill hall"
+edit events description "PDP class" from 2025-11-18T16:00 with "Semester1 PDP class"
+create event "CalendarDesign class" from 2025-11-01T13:00 to 2025-11-03T18:30 repeats TSUWF for 16 times
+print events on 2025-10-25
+show status on 2025-10-27T12:15
+print events from 2025-10-25T12:00 to 2025-11-25T12:00
+export cal my_ical_calendar.ical
+use calendar --name "Summer2025"
+print events from 2025-10-25T12:00 to 2025-12-25T12:00
+exit
