@@ -1,9 +1,13 @@
 // controller/CalendarGuiController.java
 package controller;
 
+import controller.features.CalendarFeatures;
+import java.util.Set;
 import model.Event;
 import model.IcalendarSystem;
 import model.Icalendar;
+import view.CalendarView;
+import view.IcalendarView;
 import view.gui.CalendarGuiView;
 import view.gui.CalendarViewListener;
 import javax.swing.SwingUtilities;
@@ -17,17 +21,19 @@ import java.util.List;
  * GUI Controller - implements listener to handle view events.
  * Only the controller calls the model.
  */
-public class CalendarGuiController implements CalendarViewListener {
+public class CalendarGuiController implements CalendarFeatures {
   private final IcalendarSystem model;
   private final CalendarGuiView view;
+  private final CommandExecutor executor;
   private Icalendar currentCalendar;
 
   public CalendarGuiController(IcalendarSystem model) {
     this.model = model;
     this.view = new CalendarGuiView();
+    IcalendarView textView = new CalendarView();
+    this.executor = new CommandExecutor(model, textView);
 
-    // Register as listener
-    view.addListener(this);
+    view.setFeatures(this);
 
     // Create default calendar
     createDefaultCalendar();
@@ -35,6 +41,7 @@ public class CalendarGuiController implements CalendarViewListener {
     // Initial update
     updateCalendarList();
   }
+
 
   private void createDefaultCalendar() {
     try {
@@ -46,12 +53,17 @@ public class CalendarGuiController implements CalendarViewListener {
     }
   }
 
-  // Implement CalendarViewListener methods
+  // ==================== CALENDAR MANAGEMENT ====================
 
   @Override
-  public void onCreateCalendarRequested(String name, String timezone) {
+  public void createCalendar(String name, String timezone) {
     try {
-      model.createCalendar(name, timezone);
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_CALENDAR)
+          .calendarName(name)
+          .calendarTimeZone(timezone)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
       updateCalendarList();
       view.showSuccess("Calendar '" + name + "' created successfully");
     } catch (Exception e) {
@@ -60,39 +72,67 @@ public class CalendarGuiController implements CalendarViewListener {
   }
 
   @Override
-  public void onCalendarSelected(String calendarName) {
+  public void selectCalendar(String calendarName) {
     try {
       currentCalendar = model.getCalendar(calendarName);
       view.setSelectedCalendar(calendarName);
-      // Refresh event display if date is selected
-      onDateSelected(LocalDate.now());
+      viewEventsOnDate(LocalDate.now());
     } catch (Exception e) {
       view.showError("Failed to switch calendar: " + e.getMessage());
     }
   }
 
   @Override
-  public void onDateSelected(LocalDate date) {
-    updateEventDisplay(date);
+  public void editCalendarName(String calendarName, String newName) {
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_NAME)
+          .calendarName(calendarName)
+          .propertyToEdit("name")
+          .newPropertyValue(newName)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      updateCalendarList();
+      view.showSuccess("Calendar renamed successfully");
+    } catch (Exception e) {
+      view.showError("Failed to rename calendar: " + e.getMessage());
+    }
   }
 
   @Override
-  public void onCreateEventRequested(LocalDate date, String subject,
-                                     LocalDate startDate, int startHour, int startMinute,
-                                     LocalDate endDate, int endHour, int endMinute) {
+  public void editCalendarTimezone(String calendarName, String newTimezone) {
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_ZONE)
+          .calendarName(calendarName)
+          .propertyToEdit("timezone")
+          .newPropertyValue(newTimezone)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Timezone updated successfully");
+    } catch (Exception e) {
+      view.showError("Failed to update timezone: " + e.getMessage());
+    }
+  }
+
+  // ==================== EVENT CREATION ====================
+
+  @Override
+  public void createSingleEvent(String subject, LocalDateTime start, LocalDateTime end) {
     if (currentCalendar == null) {
       view.showError("No calendar selected");
       return;
     }
 
     try {
-      LocalDateTime start = LocalDateTime.of(startDate,
-          java.time.LocalTime.of(startHour, startMinute));
-      LocalDateTime end = LocalDateTime.of(endDate,
-          java.time.LocalTime.of(endHour, endMinute));
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SINGLE_EVENT)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .build();
 
-      currentCalendar.addEvent(subject, start, end);
-      updateEventDisplay(date);
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(start.toLocalDate());
       view.showSuccess("Event created successfully");
     } catch (Exception e) {
       view.showError("Failed to create event: " + e.getMessage());
@@ -100,41 +140,102 @@ public class CalendarGuiController implements CalendarViewListener {
   }
 
   @Override
-  public void onEditEventRequested(LocalDate date, String eventIdentifier,
-                                   String newSubject, int newStartHour, int newStartMinute,
-                                   int newEndHour, int newEndMinute) {
+  public void createAllDayEvent(String subject, LocalDate date) {
     if (currentCalendar == null) {
       view.showError("No calendar selected");
       return;
     }
 
     try {
-      // Find the event by name and date
-      List<Event> events = currentCalendar.getEventsOn(date);
-      Event targetEvent = null;
+      ParsedCommand cmd = new  ParsedCommand.Builder(CommandType.CREATE_ALL_DAY_EVENT)
+          .subject(subject)
+          .startDateTime(date.atTime(8, 0))
+          .endDateTime(date.atTime(17, 0))
+          .build();
 
-      for (Event event : events) {
-        if (event.getSubject().equalsIgnoreCase(eventIdentifier)) {
-          targetEvent = event;
-          break;
-        }
-      }
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(date);
+      view.showSuccess("All-day event created successfully");
+    } catch (Exception e) {
+      view.showError("Failed to create all-day event: " + e.getMessage());
+    }
+  }
 
-      if (targetEvent == null) {
-        view.showError("Event not found: " + eventIdentifier);
-        return;
-      }
+  @Override
+  public void createRecurringEventWithOccurrences(String subject, LocalDateTime start,
+                                                  LocalDateTime end,
+                                                  Set<DayOfWeekAlphabet> weekdays,
+                                                  int occurrences) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
 
-      // Edit the event
-      currentCalendar.editEvent(
-          targetEvent.getSubject(),
-          targetEvent.getStart(),
-          targetEvent.getEnd(),
-          "subject",
-          newSubject
-      );
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .weekdays(weekdays)
+          .occurrences(occurrences)
+          .build();
 
-      updateEventDisplay(date);
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(start.toLocalDate());
+      view.showSuccess("Recurring event created successfully");
+    } catch (Exception e) {
+      view.showError("Failed to create recurring event: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public void createRecurringEventUntilDate(String subject, LocalDateTime start,
+                                            LocalDateTime end,
+                                            Set<DayOfWeekAlphabet> weekdays,
+                                            LocalDate endDate) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .weekdays(weekdays)
+          .seriesEndDate(endDate)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(start.toLocalDate());
+      view.showSuccess("Recurring event created successfully");
+    } catch (Exception e) {
+      view.showError("Failed to create recurring event: " + e.getMessage());
+    }
+  }
+
+  // ==================== EVENT EDITING ====================
+
+  @Override
+  public void editSingleEvent(String subject, LocalDateTime start, LocalDateTime end,
+                              String property, String newValue) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(start.toLocalDate());
       view.showSuccess("Event updated successfully");
     } catch (Exception e) {
       view.showError("Failed to edit event: " + e.getMessage());
@@ -142,22 +243,57 @@ public class CalendarGuiController implements CalendarViewListener {
   }
 
   @Override
-  public void onMonthChanged(int year, int month) {
-    // Could update display if needed
-  }
+  public void editEventsFromDate(String subject, LocalDateTime startDateTime,
+                                 String property, String newValue) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
 
-  // Helper methods
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
+          .subject(subject)
+          .startDateTime(startDateTime)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
 
-  private void updateCalendarList() {
-    List<String> calendarNames = getAllCalendarNames();
-    view.setCalendarNames(calendarNames);
-
-    if (currentCalendar != null) {
-      view.setSelectedCalendar(currentCalendar.getCalendarName());
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(startDateTime.toLocalDate());
+      view.showSuccess("Events updated successfully");
+    } catch (Exception e) {
+      view.showError("Failed to edit events: " + e.getMessage());
     }
   }
 
-  private void updateEventDisplay(LocalDate date) {
+  @Override
+  public void editAllInSeries(String subject, LocalDateTime anyEventStart,
+                              String property, String newValue) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
+          .subject(subject)
+          .startDateTime(anyEventStart)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      viewEventsOnDate(anyEventStart.toLocalDate());
+      view.showSuccess("Series updated successfully");
+    } catch (Exception e) {
+      view.showError("Failed to edit series: " + e.getMessage());
+    }
+  }
+
+  // ==================== EVENT QUERYING ====================
+
+  @Override
+  public void viewEventsOnDate(LocalDate date) {
     if (currentCalendar == null) {
       view.setEventDisplayText("No calendar selected");
       return;
@@ -187,12 +323,166 @@ public class CalendarGuiController implements CalendarViewListener {
     }
   }
 
-  private List<String> getAllCalendarNames() {
-    // You'll need to add this method to IcalendarSystem
-    return model.getAllCalendarNames();
+  @Override
+  public void viewEventsFromDate(LocalDateTime startDateTime) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.PRINT_EVENTS_FROM)
+          .startDateTime(startDateTime)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Events displayed in console");
+    } catch (Exception e) {
+      view.showError("Failed to query events: " + e.getMessage());
+    }
   }
 
+  @Override
+  public void checkStatus(LocalDateTime dateTime) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.SHOW_STATUS)
+          .startDateTime(dateTime)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+    } catch (Exception e) {
+      view.showError("Failed to check status: " + e.getMessage());
+    }
+  }
+
+  // ==================== EVENT COPYING ====================
+
+  @Override
+  public void copySingleEvent(String subject, LocalDateTime sourceDateTime,
+                              LocalDateTime targetDateTime, String targetCalendarName) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.COPY_SINGLE_EVENT)
+          .subject(subject)
+          .startDateTime(sourceDateTime)
+          .targetDateTime(targetDateTime)
+          .targetCalendarName(targetCalendarName)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Event copied successfully");
+    } catch (Exception e) {
+      view.showError("Failed to copy event: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public void copyEventsOnDate(LocalDate sourceDate, LocalDate targetDate,
+                               String targetCalendarName) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.COPY_EVENTS_ON_DATE)
+          .startDateTime(sourceDate.atStartOfDay())
+          .targetDateTime(targetDate.atStartOfDay())
+          .targetCalendarName(targetCalendarName)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Events copied successfully");
+    } catch (Exception e) {
+      view.showError("Failed to copy events: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public void copyEventsBetweenDates(LocalDate sourceStartDate, LocalDate sourceEndDate,
+                                     LocalDate targetStartDate, String targetCalendarName) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.COPY_EVENTS_BETWEEN_DATES)
+          .intervalStartDate(sourceStartDate)
+          .intervalEndDate(sourceEndDate)
+          .targetDate(targetStartDate)
+          .targetCalendarName(targetCalendarName)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Events copied successfully");
+    } catch (Exception e) {
+      view.showError("Failed to copy events: " + e.getMessage());
+    }
+  }
+
+  // ==================== EXPORT ====================
+
+  @Override
+  public void exportToCSV(String filePath) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_CSV)
+          .fileName(filePath)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Calendar exported to CSV successfully");
+    } catch (Exception e) {
+      view.showError("Failed to export to CSV: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public void exportToICal(String filePath) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_ICAL)
+          .fileName(filePath)
+          .build();
+
+      executor.executeCommand(cmd, currentCalendar);
+      view.showSuccess("Calendar exported to iCal successfully");
+    } catch (Exception e) {
+      view.showError("Failed to export to iCal: " + e.getMessage());
+    }
+  }
+
+  // ==================== HELPER METHODS ====================
+
+  private void updateCalendarList() {
+    List<String> calendarNames = model.getAllCalendarNames();
+    view.setCalendarNames(calendarNames);
+
+    if (currentCalendar != null) {
+      view.setSelectedCalendar(currentCalendar.getCalendarName());
+    }
+  }
   public void run() {
     SwingUtilities.invokeLater(view::display);
   }
+
+
 }
