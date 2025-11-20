@@ -64,6 +64,7 @@ public class EventCreationDialog extends JDialog {
     add(mainPanel);
   }
 
+
   private JPanel createBasicFieldsPanel() {
     JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
 

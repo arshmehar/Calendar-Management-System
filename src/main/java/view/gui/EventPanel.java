@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Panel representing a single clickable event.
+ * Only displays properties that have been set (non-null, non-empty).
  */
 public class EventPanel extends JPanel {
   private final Event event;
@@ -28,33 +29,71 @@ public class EventPanel extends JPanel {
     setLayout(new BorderLayout(5, 5));
     setBorder(BorderFactory.createCompoundBorder(
         BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
-        BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        BorderFactory.createEmptyBorder(10, 10, 10, 10)
     ));
     setBackground(new Color(245, 245, 250));
-    setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-    // Event details
+    // Calculate height based on how many properties are present
+    int baseHeight = 60;
+    int extraHeight = 0;
+    if (hasLocation()) extraHeight += 15;
+    if (hasDescription()) extraHeight += 15;
+    if (hasStatus()) extraHeight += 15;
+    if (event.getSeriesId() != null) extraHeight += 15;
+
+    setMaximumSize(new Dimension(Integer.MAX_VALUE, baseHeight + extraHeight));
+
+    // Event details panel
     JPanel detailsPanel = new JPanel();
     detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
     detailsPanel.setBackground(new Color(245, 245, 250));
 
-    // Subject
+    // Subject (always shown)
     JLabel subjectLabel = new JLabel(event.getSubject());
-    subjectLabel.setFont(new Font("Arial", Font.BOLD, 13));
+    subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
     detailsPanel.add(subjectLabel);
+    detailsPanel.add(Box.createVerticalStrut(3));
 
-    // Time
+    // Time (always shown)
     DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
-    String timeText = event.getStart().format(timeFormat) +
+    String timeText = "⏰ " + event.getStart().format(timeFormat) +
         " - " + event.getEnd().format(timeFormat);
     JLabel timeLabel = new JLabel(timeText);
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-    timeLabel.setForeground(Color.GRAY);
+    timeLabel.setForeground(new Color(80, 80, 80));
     detailsPanel.add(timeLabel);
 
-    // Series indicator
+    // Location (only if set)
+    if (hasLocation()) {
+      JLabel locationLabel = new JLabel("Location: " + event.getLocation());
+      locationLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      locationLabel.setForeground(new Color(80, 80, 80));
+      detailsPanel.add(locationLabel);
+    }
+
+    // Description (only if set)
+    if (hasDescription()) {
+      String desc = event.getDescription();
+      if (desc.length() > 50) {
+        desc = desc.substring(0, 47) + "...";
+      }
+      JLabel descLabel = new JLabel("Description: " + desc);
+      descLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      descLabel.setForeground(new Color(80, 80, 80));
+      detailsPanel.add(descLabel);
+    }
+
+    // Status (only if set)
+    if (hasStatus()) {
+      JLabel statusLabel = new JLabel(  "Status: " + event.getStatus());
+      statusLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      statusLabel.setForeground(new Color(80, 80, 80));
+      detailsPanel.add(statusLabel);
+    }
+
+    // Series indicator (only if part of series)
     if (event.getSeriesId() != null) {
-      JLabel seriesLabel = new JLabel("🔁 Recurring");
+      JLabel seriesLabel = new JLabel("🔁 Recurring Event");
       seriesLabel.setFont(new Font("Arial", Font.ITALIC, 10));
       seriesLabel.setForeground(new Color(100, 100, 200));
       detailsPanel.add(seriesLabel);
@@ -62,17 +101,19 @@ public class EventPanel extends JPanel {
 
     add(detailsPanel, BorderLayout.CENTER);
 
-    // Buttons
+    // Action buttons
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
     buttonPanel.setBackground(new Color(245, 245, 250));
 
     JButton editButton = new JButton("Edit");
     editButton.setFont(new Font("Arial", Font.PLAIN, 10));
+    editButton.setPreferredSize(new Dimension(60, 25));
     editButton.addActionListener(e -> showEditOptions());
     buttonPanel.add(editButton);
 
     JButton copyButton = new JButton("Copy");
     copyButton.setFont(new Font("Arial", Font.PLAIN, 10));
+    copyButton.setPreferredSize(new Dimension(60, 25));
     copyButton.addActionListener(e -> showCopyDialog());
     buttonPanel.add(copyButton);
 
@@ -96,6 +137,20 @@ public class EventPanel extends JPanel {
         setCursor(Cursor.getDefaultCursor());
       }
     });
+  }
+
+  // Helper methods to check if properties are set
+
+  private boolean hasLocation() {
+    return event.getLocation() != null && !event.getLocation().trim().isEmpty();
+  }
+
+  private boolean hasDescription() {
+    return event.getDescription() != null && !event.getDescription().trim().isEmpty();
+  }
+
+  private boolean hasStatus() {
+    return event.getStatus() != null;
   }
 
   private void showEditOptions() {
