@@ -10,6 +10,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.Event;
+
 /**
  * Simple GUI view - only displays and notifies listeners.
  * Does NOT call controller or model directly.
@@ -26,6 +28,7 @@ public class CalendarGuiView {
 
   private YearMonth currentMonth;
   private LocalDate selectedDate;
+  private JPanel eventContainer;
 
   public CalendarGuiView() {
     this.currentMonth = YearMonth.now();
@@ -112,21 +115,25 @@ public class CalendarGuiView {
   private JPanel createRightPanel() {
     JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    rightPanel.setPreferredSize(new Dimension(320, 0));
+    rightPanel.setPreferredSize(new Dimension(350, 0));
 
+    // Header
     JLabel eventLabel = new JLabel("Events:");
     eventLabel.setFont(new Font("Arial", Font.BOLD, 14));
     rightPanel.add(eventLabel, BorderLayout.NORTH);
 
-    eventDisplay = new JTextArea();
-    eventDisplay.setEditable(false);
-    eventDisplay.setLineWrap(true);
-    eventDisplay.setWrapStyleWord(true);
-    JScrollPane scrollPane = new JScrollPane(eventDisplay);
+    // Scrollable event container
+    eventContainer = new JPanel();
+    eventContainer.setLayout(new BoxLayout(eventContainer, BoxLayout.Y_AXIS));
+    eventContainer.setBackground(Color.WHITE);
+
+    JScrollPane scrollPane = new JScrollPane(eventContainer);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
     rightPanel.add(scrollPane, BorderLayout.CENTER);
 
-    // Button panel
-    JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 5, 5));
+    // Action buttons
+    JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 5));
 
     JButton createEventBtn = new JButton("Create Event");
     createEventBtn.addActionListener(e -> showCreateEventDialog());
@@ -135,14 +142,6 @@ public class CalendarGuiView {
     JButton createRecurringBtn = new JButton("Create Recurring");
     createRecurringBtn.addActionListener(e -> showCreateRecurringDialog());
     buttonPanel.add(createRecurringBtn);
-
-    JButton editEventBtn = new JButton("Edit Event");
-    editEventBtn.addActionListener(e -> showEditEventDialog());
-    buttonPanel.add(editEventBtn);
-
-    JButton copyEventBtn = new JButton("Copy Event");
-    copyEventBtn.addActionListener(e -> showCopyEventDialog());
-    buttonPanel.add(copyEventBtn);
 
     JButton exportBtn = new JButton("Export Calendar");
     exportBtn.addActionListener(e -> showExportDialog());
@@ -364,8 +363,25 @@ public class CalendarGuiView {
     calendarSelector.setSelectedItem(name);
   }
 
-  public void setEventDisplayText(String text) {
-    eventDisplay.setText(text);
+  public void displayEvents(List<Event> events, LocalDate date) {
+    eventContainer.removeAll();
+
+    if (events == null || events.isEmpty()) {
+      JLabel noEvents = new JLabel("No events on " + date);
+      noEvents.setForeground(Color.GRAY);
+      noEvents.setAlignmentX(Component.CENTER_ALIGNMENT);
+      noEvents.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+      eventContainer.add(noEvents);
+    } else {
+      for (Event event : events) {
+        EventPanel eventPanel = new EventPanel(event, date, features);
+        eventContainer.add(eventPanel);
+        eventContainer.add(Box.createVerticalStrut(5));
+      }
+    }
+
+    eventContainer.revalidate();
+    eventContainer.repaint();
   }
 
   public void showError(String message) {

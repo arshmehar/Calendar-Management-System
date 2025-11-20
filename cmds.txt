@@ -22,3 +22,10 @@ in timezone selection, allow user to enter timezone also as a text box? or add m
 
 possible: shift features into different classes from controller such as createEventFeature etc.
 add gui as a mode.
+
+
+delete mode 100644 src/main/java/controller/IguiController.java
+ delete mode 100644 src/main/java/controller/features/CreateCalendarFeature.java
+ delete mode 100644 src/main/java/controller/features/CreateEventFeature.java
+ delete mode 100644 src/main/java/view/IcalendarGuiView.java
+ delete mode 100644 src/main/java/view/gui/CalendarViewListener.java

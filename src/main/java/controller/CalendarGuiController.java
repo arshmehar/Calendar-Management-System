@@ -294,32 +294,12 @@ public class CalendarGuiController implements CalendarFeatures {
   @Override
   public void viewEventsOnDate(LocalDate date) {
     if (currentCalendar == null) {
-      view.setEventDisplayText("No calendar selected");
+      view.displayEvents(null, date);
       return;
     }
 
     List<Event> events = currentCalendar.getEventsOn(date);
-
-    if (events.isEmpty()) {
-      view.setEventDisplayText("No events on " + date);
-    } else {
-      StringBuilder sb = new StringBuilder();
-      sb.append("Events on ").append(date).append(":\n\n");
-      DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
-
-      for (Event event : events) {
-        sb.append("• ").append(event.getSubject()).append("\n");
-        sb.append("  ").append(event.getStart().format(timeFormat))
-            .append(" - ").append(event.getEnd().format(timeFormat)).append("\n");
-
-        if (event.getSeriesId() != null) {
-          sb.append("  (Recurring)\n");
-        }
-        sb.append("\n");
-      }
-
-      view.setEventDisplayText(sb.toString());
-    }
+    view.displayEvents(events, date);
   }
 
   @Override
