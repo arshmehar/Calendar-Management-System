@@ -354,4 +354,12 @@ public class CalendarSystem implements IcalendarSystem {
     }
   }
 
+  /**
+   * @return
+   */
+  @Override
+  public List<String> getAllCalendarNames() {
+    return List.copyOf(calendarsByName.keySet());
+  }
+
 }

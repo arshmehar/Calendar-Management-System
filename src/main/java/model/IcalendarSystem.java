@@ -3,6 +3,7 @@ package model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 /**
  * Represents a calendar system that manages multiple calendars.
@@ -98,4 +99,6 @@ public interface IcalendarSystem {
                          LocalDate targetStartDate,
                          String sourceCalendarName,
                          String targetCalendarName);
+
+  List<String> getAllCalendarNames();
 }
