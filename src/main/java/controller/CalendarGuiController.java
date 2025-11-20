@@ -9,7 +9,6 @@ import model.Icalendar;
 import view.CalendarView;
 import view.IcalendarView;
 import view.gui.CalendarGuiView;
-import view.gui.CalendarViewListener;
 import javax.swing.SwingUtilities;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
