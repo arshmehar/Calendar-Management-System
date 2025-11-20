@@ -1,6 +1,7 @@
 // view/gui/EditEventDialog.java
 package view.gui;
 
+import java.util.Objects;
 import model.Event;
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class EditEventDialog extends JDialog {
 
     inputPanel.add(new JLabel("Property to edit:"));
     propertyCombo = new JComboBox<>(new String[]{
-        "subject", "start", "end", "location", "description"
+        "Subject", "Start", "End", "Location", "Description", "Status"
     });
     inputPanel.add(propertyCombo);
 
@@ -87,6 +88,17 @@ public class EditEventDialog extends JDialog {
           JOptionPane.ERROR_MESSAGE);
       return false;
     }
+  if(Objects.equals(getProperty(), "Status")){
+    if(!Objects.equals(getNewValue().toLowerCase(), "private" ) &&
+        !Objects.equals(getNewValue().toLowerCase(), "public" )){
+      JOptionPane.showMessageDialog(this,
+          "Event Status should be Public or Private",
+          "Validation Error",
+          JOptionPane.ERROR_MESSAGE);
+      return false;
+    }
+  }
+
     return true;
   }
 
