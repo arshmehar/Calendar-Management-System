@@ -8,3 +8,17 @@ use calendar --name s2
 print events on 2025-11-04
 print events on 2025-11-03
 copy event trial on 2025-11-03T12:00 --target study2 to 2025-11-05T13:00
+
+instead of text showing events, show labels with events. event can be clicked and can be edited or copied
+when editing it should ask what property to edit
+calendar rename/ change timezone functionality
+when copying it should ask range or which date or which event etc
+when editing, event should allow clicking to change property
+after editing refresh screen?
+how to edit series of events?
+event should only show (recurring) if it part of a series. if editing changes its series it should not show
+in timezone selection, allow user to enter timezone also as a text box? or add more timezones in dropdown. or create a searchable box which autocompletes?
+
+
+possible: shift features into different classes from controller such as createEventFeature etc.
+add gui as a mode.
