@@ -50,7 +50,8 @@ public class CalendarGuiView {
     frame.add(createTopPanel(), BorderLayout.NORTH);
 
     // Center - calendar grid
-    calendarGrid = new JPanel(new GridLayout(7, 7, 5, 5));
+    // Use 0 rows to allow dynamic addition, fixed 7 columns
+    calendarGrid = new JPanel(new GridLayout(0, 7, 5, 5));
     calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     frame.add(calendarGrid, BorderLayout.CENTER);
 
@@ -155,8 +156,8 @@ public class CalendarGuiView {
   private void buildCalendar() {
     calendarGrid.removeAll();
 
-    // Day headers
-    String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    // Day headers - Mon to Sun
+    String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
     for (String day : days) {
       JLabel label = new JLabel(day, SwingConstants.CENTER);
       label.setFont(new Font("Arial", Font.BOLD, 12));
@@ -164,8 +165,10 @@ public class CalendarGuiView {
     }
 
     LocalDate firstDay = currentMonth.atDay(1);
-    int startDayOfWeek = firstDay.getDayOfWeek().getValue() % 7;
+    // Adjust start day to match Mon-Sun (Mon=1 becomes 0, Sun=7 becomes 6)
+    int startDayOfWeek = firstDay.getDayOfWeek().getValue() - 1;
 
+    // Add empty slots before start of month
     for (int i = 0; i < startDayOfWeek; i++) {
       calendarGrid.add(new JLabel(""));
     }
@@ -185,6 +188,13 @@ public class CalendarGuiView {
 
       dayButton.addActionListener(e -> selectDate(date));
       calendarGrid.add(dayButton);
+    }
+
+    // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
+    int cellsFilled = startDayOfWeek + daysInMonth;
+    int totalCells = 42;
+    for (int i = cellsFilled; i < totalCells; i++) {
+      calendarGrid.add(new JLabel(""));
     }
 
     calendarGrid.revalidate();
@@ -317,7 +327,7 @@ public class CalendarGuiView {
   private void showExportDialog() {
     if (features == null) return;
 
-    String[] options = {"CSV", "iCal", "Cancel"};
+    String[] options = {"CSV", "iCal"};
     int choice = JOptionPane.showOptionDialog(frame,
         "Select export format:",
         "Export Calendar",
