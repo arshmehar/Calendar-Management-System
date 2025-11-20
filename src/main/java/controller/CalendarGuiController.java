@@ -1,27 +1,39 @@
+// controller/CalendarGuiController.java
 package controller;
 
-import java.time.ZoneId;
-import java.util.List;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import model.Icalendar;
+import model.Event;
 import model.IcalendarSystem;
+import model.Icalendar;
 import view.gui.CalendarGuiView;
+import view.gui.CalendarViewListener;
+import javax.swing.SwingUtilities;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
-public class CalendarGuiController implements IguiController{
-
+/**
+ * GUI Controller - implements listener to handle view events.
+ * Only the controller calls the model.
+ */
+public class CalendarGuiController implements CalendarViewListener {
   private final IcalendarSystem model;
   private final CalendarGuiView view;
-  private final CommandExecutor commandExecutor;
   private Icalendar currentCalendar;
 
   public CalendarGuiController(IcalendarSystem model) {
     this.model = model;
-    this.commandExecutor = new CommandExecutor(model, null); // No text view needed
-    this.view = new CalendarGuiView(this); // Pass controller to view
+    this.view = new CalendarGuiView();
 
-    // Create and set default calendar
+    // Register as listener
+    view.addListener(this);
+
+    // Create default calendar
     createDefaultCalendar();
+
+    // Initial update
+    updateCalendarList();
   }
 
   private void createDefaultCalendar() {
@@ -30,79 +42,156 @@ public class CalendarGuiController implements IguiController{
       model.createCalendar("Default", systemZone.getId());
       currentCalendar = model.getCalendar("Default");
     } catch (Exception e) {
-      showError("Failed to create default calendar: " + e.getMessage());
+      view.showError("Failed to create default calendar: " + e.getMessage());
     }
   }
 
-  @Override
-  public void executeCommand(ParsedCommand cmd) throws Exception {
-    // Handle context setting specially
-    if (cmd.getCommandType() == CommandType.SET_CONTEXT) {
-      currentCalendar = commandExecutor.handleContextSetting(cmd);
-      showSuccess("Switched to calendar: " + currentCalendar.getCalendarName());
-    } else {
-      // Execute regular commands
-      commandExecutor.executeCommand(cmd, currentCalendar);
-    }
-  }
+  // Implement CalendarViewListener methods
 
   @Override
-  public Icalendar getCurrentCalendar() {
-    return currentCalendar;
-  }
-
-  @Override
-  public void setCurrentCalendar(String calendarName) {
+  public void onCreateCalendarRequested(String name, String timezone) {
     try {
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.SET_CONTEXT)
-          .context(calendarName)
-          .build();
-
-      executeCommand(cmd);
-      refreshView();
+      model.createCalendar(name, timezone);
+      updateCalendarList();
+      view.showSuccess("Calendar '" + name + "' created successfully");
     } catch (Exception e) {
-      showError("Failed to switch calendar: " + e.getMessage());
+      view.showError("Failed to create calendar: " + e.getMessage());
     }
   }
 
   @Override
-  public void refreshView() {
-    view.refresh();
+  public void onCalendarSelected(String calendarName) {
+    try {
+      currentCalendar = model.getCalendar(calendarName);
+      view.setSelectedCalendar(calendarName);
+      // Refresh event display if date is selected
+      onDateSelected(LocalDate.now());
+    } catch (Exception e) {
+      view.showError("Failed to switch calendar: " + e.getMessage());
+    }
   }
 
   @Override
-  public void showError(String message) {
-    JOptionPane.showMessageDialog(
-        view.getFrame(),
-        message,
-        "Error",
-        JOptionPane.ERROR_MESSAGE
-    );
+  public void onDateSelected(LocalDate date) {
+    updateEventDisplay(date);
   }
 
   @Override
-  public void showSuccess(String message) {
-    JOptionPane.showMessageDialog(
-        view.getFrame(),
-        message,
-        "Success",
-        JOptionPane.INFORMATION_MESSAGE
-    );
+  public void onCreateEventRequested(LocalDate date, String subject,
+                                     LocalDate startDate, int startHour, int startMinute,
+                                     LocalDate endDate, int endHour, int endMinute) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      LocalDateTime start = LocalDateTime.of(startDate,
+          java.time.LocalTime.of(startHour, startMinute));
+      LocalDateTime end = LocalDateTime.of(endDate,
+          java.time.LocalTime.of(endHour, endMinute));
+
+      currentCalendar.addEvent(subject, start, end);
+      updateEventDisplay(date);
+      view.showSuccess("Event created successfully");
+    } catch (Exception e) {
+      view.showError("Failed to create event: " + e.getMessage());
+    }
   }
 
   @Override
-  public IcalendarSystem getModel() {
-    return model;
+  public void onEditEventRequested(LocalDate date, String eventIdentifier,
+                                   String newSubject, int newStartHour, int newStartMinute,
+                                   int newEndHour, int newEndMinute) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
+    try {
+      // Find the event by name and date
+      List<Event> events = currentCalendar.getEventsOn(date);
+      Event targetEvent = null;
+
+      for (Event event : events) {
+        if (event.getSubject().equalsIgnoreCase(eventIdentifier)) {
+          targetEvent = event;
+          break;
+        }
+      }
+
+      if (targetEvent == null) {
+        view.showError("Event not found: " + eventIdentifier);
+        return;
+      }
+
+      // Edit the event
+      currentCalendar.editEvent(
+          targetEvent.getSubject(),
+          targetEvent.getStart(),
+          targetEvent.getEnd(),
+          "subject",
+          newSubject
+      );
+
+      updateEventDisplay(date);
+      view.showSuccess("Event updated successfully");
+    } catch (Exception e) {
+      view.showError("Failed to edit event: " + e.getMessage());
+    }
   }
 
   @Override
-  public List<String> getAllCalendarNames() {
+  public void onMonthChanged(int year, int month) {
+    // Could update display if needed
+  }
+
+  // Helper methods
+
+  private void updateCalendarList() {
+    List<String> calendarNames = getAllCalendarNames();
+    view.setCalendarNames(calendarNames);
+
+    if (currentCalendar != null) {
+      view.setSelectedCalendar(currentCalendar.getCalendarName());
+    }
+  }
+
+  private void updateEventDisplay(LocalDate date) {
+    if (currentCalendar == null) {
+      view.setEventDisplayText("No calendar selected");
+      return;
+    }
+
+    List<Event> events = currentCalendar.getEventsOn(date);
+
+    if (events.isEmpty()) {
+      view.setEventDisplayText("No events on " + date);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Events on ").append(date).append(":\n\n");
+      DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
+
+      for (Event event : events) {
+        sb.append("• ").append(event.getSubject()).append("\n");
+        sb.append("  ").append(event.getStart().format(timeFormat))
+            .append(" - ").append(event.getEnd().format(timeFormat)).append("\n");
+
+        if (event.getSeriesId() != null) {
+          sb.append("  (Recurring)\n");
+        }
+        sb.append("\n");
+      }
+
+      view.setEventDisplayText(sb.toString());
+    }
+  }
+
+  private List<String> getAllCalendarNames() {
+    // You'll need to add this method to IcalendarSystem
     return model.getAllCalendarNames();
   }
 
-  /**
-   * Start the GUI application.
-   */
   public void run() {
     SwingUtilities.invokeLater(view::display);
   }

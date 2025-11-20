@@ -1,19 +1,23 @@
 // view/gui/CalendarGuiView.java
 package view.gui;
 
-import controller.IguiController;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Simple GUI window for the calendar application.
+ * Simple GUI view - only displays and notifies listeners.
+ * Does NOT call controller or model directly.
  */
 public class CalendarGuiView {
-  private final IguiController controller;
   private final JFrame frame;
+  private final List<CalendarViewListener> listeners;
+
+  // UI Components
   private JLabel monthLabel;
   private JPanel calendarGrid;
   private JTextArea eventDisplay;
@@ -22,8 +26,8 @@ public class CalendarGuiView {
   private YearMonth currentMonth;
   private LocalDate selectedDate;
 
-  public CalendarGuiView(IguiController controller) {
-    this.controller = controller;
+  public CalendarGuiView() {
+    this.listeners = new ArrayList<>();
     this.currentMonth = YearMonth.now();
     this.selectedDate = LocalDate.now();
 
@@ -35,19 +39,31 @@ public class CalendarGuiView {
     setupUI();
   }
 
+  /**
+   * Add a listener to receive GUI events.
+   */
+  public void addListener(CalendarViewListener listener) {
+    listeners.add(listener);
+  }
+
   private void setupUI() {
     frame.setLayout(new BorderLayout(10, 10));
 
-    // Top panel - calendar selector and navigation
+    // Top panel
     JPanel topPanel = new JPanel(new FlowLayout());
 
     topPanel.add(new JLabel("Calendar:"));
     calendarSelector = new JComboBox<>();
-    calendarSelector.addActionListener(e -> onCalendarChanged());
+    calendarSelector.addActionListener(e -> {
+      String selected = (String) calendarSelector.getSelectedItem();
+      if (selected != null) {
+        notifyCalendarSelected(selected);
+      }
+    });
     topPanel.add(calendarSelector);
 
     JButton newCalButton = new JButton("New Calendar");
-    newCalButton.addActionListener(e -> createCalendar());
+    newCalButton.addActionListener(e -> showCreateCalendarDialog());
     topPanel.add(newCalButton);
 
     JButton prevButton = new JButton("< Prev");
@@ -73,7 +89,7 @@ public class CalendarGuiView {
     calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     frame.add(calendarGrid, BorderLayout.CENTER);
 
-    // Right panel - event display and actions
+    // Right panel
     JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     rightPanel.setPreferredSize(new Dimension(300, 0));
@@ -89,21 +105,20 @@ public class CalendarGuiView {
     rightPanel.add(scrollPane, BorderLayout.CENTER);
 
     JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+
     JButton createEventBtn = new JButton("Create Event");
-    createEventBtn.addActionListener(e -> createEvent());
+    createEventBtn.addActionListener(e -> showCreateEventDialog());
     buttonPanel.add(createEventBtn);
 
     JButton editEventBtn = new JButton("Edit Event");
-    editEventBtn.addActionListener(e -> editEvent());
+    editEventBtn.addActionListener(e -> showEditEventDialog());
     buttonPanel.add(editEventBtn);
 
     rightPanel.add(buttonPanel, BorderLayout.SOUTH);
-
     frame.add(rightPanel, BorderLayout.EAST);
 
     updateMonthLabel();
     buildCalendar();
-    refreshCalendarList();
   }
 
   private void buildCalendar() {
@@ -132,12 +147,10 @@ public class CalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      // Highlight today
       if (date.equals(LocalDate.now())) {
         dayButton.setBackground(Color.YELLOW);
       }
 
-      // Highlight selected
       if (date.equals(selectedDate)) {
         dayButton.setBackground(Color.LIGHT_GRAY);
       }
@@ -153,36 +166,14 @@ public class CalendarGuiView {
   private void selectDate(LocalDate date) {
     selectedDate = date;
     buildCalendar();
-    updateEventDisplay();
-  }
-
-  private void updateEventDisplay() {
-    if (controller.getCurrentCalendar() == null) {
-      eventDisplay.setText("No calendar selected");
-      return;
-    }
-
-    var events = controller.getCurrentCalendar().getEventsOn(selectedDate);
-    if (events.isEmpty()) {
-      eventDisplay.setText("No events on " + selectedDate);
-    } else {
-      StringBuilder sb = new StringBuilder();
-      sb.append("Events on ").append(selectedDate).append(":\n\n");
-      DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
-
-      for (var event : events) {
-        sb.append("• ").append(event.getSubject()).append("\n");
-        sb.append("  ").append(event.getStart().format(timeFormat))
-            .append(" - ").append(event.getEnd().format(timeFormat)).append("\n\n");
-      }
-      eventDisplay.setText(sb.toString());
-    }
+    notifyDateSelected(date);
   }
 
   private void changeMonth(int delta) {
     currentMonth = currentMonth.plusMonths(delta);
     updateMonthLabel();
     buildCalendar();
+    notifyMonthChanged(currentMonth.getYear(), currentMonth.getMonthValue());
   }
 
   private void goToToday() {
@@ -190,7 +181,7 @@ public class CalendarGuiView {
     selectedDate = LocalDate.now();
     updateMonthLabel();
     buildCalendar();
-    updateEventDisplay();
+    notifyDateSelected(selectedDate);
   }
 
   private void updateMonthLabel() {
@@ -198,16 +189,9 @@ public class CalendarGuiView {
     monthLabel.setText(currentMonth.format(formatter));
   }
 
-  private void onCalendarChanged() {
-    String selected = (String) calendarSelector.getSelectedItem();
-    if (selected != null) {
-      controller.setCurrentCalendar(selected);
-      buildCalendar();
-      updateEventDisplay();
-    }
-  }
+  // Dialog methods - just gather input and notify listeners
 
-  private void createCalendar() {
+  private void showCreateCalendarDialog() {
     String name = JOptionPane.showInputDialog(frame, "Enter calendar name:");
     if (name == null || name.trim().isEmpty()) return;
 
@@ -218,97 +202,124 @@ public class CalendarGuiView {
         null, timezones, timezones[0]);
 
     if (timezone != null) {
-      try {
-        controller.getModel().createCalendar(name, timezone);
-        refreshCalendarList();
-        controller.showSuccess("Calendar created");
-      } catch (Exception e) {
-        controller.showError("Error: " + e.getMessage());
-      }
+      notifyCreateCalendarRequested(name.trim(), timezone);
     }
   }
 
-  private void createEvent() {
-    if (controller.getCurrentCalendar() == null) {
-      controller.showError("Please select a calendar first");
+  private void showCreateEventDialog() {
+    SimpleEventDialog dialog = new SimpleEventDialog(frame, selectedDate);
+    dialog.setVisible(true);
+
+    if (dialog.isConfirmed()) {
+      notifyCreateEventRequested(
+          selectedDate,
+          dialog.getSubject(),
+          dialog.getStartDateTime().toLocalDate(),
+          dialog.getStartDateTime().getHour(),
+          dialog.getStartDateTime().getMinute(),
+          dialog.getEndDateTime().toLocalDate(),
+          dialog.getEndDateTime().getHour(),
+          dialog.getEndDateTime().getMinute()
+      );
+    }
+  }
+
+  private void showEditEventDialog() {
+    // Get current event text to parse which event to edit
+    String eventText = eventDisplay.getText();
+    if (eventText.contains("No events") || eventText.contains("No calendar")) {
+      showError("No events to edit");
       return;
     }
+
+    // Simple: ask user to type event name
+    String eventName = JOptionPane.showInputDialog(frame,
+        "Enter event name to edit:");
+    if (eventName == null || eventName.trim().isEmpty()) return;
 
     SimpleEventDialog dialog = new SimpleEventDialog(frame, selectedDate);
     dialog.setVisible(true);
 
     if (dialog.isConfirmed()) {
-      try {
-        controller.getCurrentCalendar().addEvent(
-            dialog.getSubject(),
-            dialog.getStartDateTime(),
-            dialog.getEndDateTime()
-        );
-        refresh();
-        controller.showSuccess("Event created");
-      } catch (Exception e) {
-        controller.showError("Error: " + e.getMessage());
-      }
+      notifyEditEventRequested(
+          selectedDate,
+          eventName.trim(),
+          dialog.getSubject(),
+          dialog.getStartDateTime().getHour(),
+          dialog.getStartDateTime().getMinute(),
+          dialog.getEndDateTime().getHour(),
+          dialog.getEndDateTime().getMinute()
+      );
     }
   }
 
-  private void editEvent() {
-    if (controller.getCurrentCalendar() == null) {
-      controller.showError("Please select a calendar first");
-      return;
-    }
+  // Notification methods - notify all listeners
 
-    var events = controller.getCurrentCalendar().getEventsOn(selectedDate);
-    if (events.isEmpty()) {
-      controller.showError("No events on selected date");
-      return;
-    }
-
-    // Simple: show list of events to select
-    String[] eventNames = events.stream()
-        .map(e -> e.getSubject() + " (" + e.getStart().toLocalTime() + ")")
-        .toArray(String[]::new);
-
-    String selected = (String) JOptionPane.showInputDialog(frame,
-        "Select event to edit:", "Edit Event",
-        JOptionPane.QUESTION_MESSAGE, null, eventNames, eventNames[0]);
-
-    if (selected != null) {
-      int index = java.util.Arrays.asList(eventNames).indexOf(selected);
-      var event = events.get(index);
-
-      SimpleEventDialog dialog = new SimpleEventDialog(frame, selectedDate, event);
-      dialog.setVisible(true);
-
-      if (dialog.isConfirmed()) {
-        try {
-          controller.getCurrentCalendar().editEvent(
-              event.getSubject(),
-              event.getStart(),
-              event.getEnd(),
-              "subject",
-              dialog.getSubject()
-          );
-          refresh();
-          controller.showSuccess("Event updated");
-        } catch (Exception e) {
-          controller.showError("Error: " + e.getMessage());
-        }
-      }
+  private void notifyCreateCalendarRequested(String name, String timezone) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onCreateCalendarRequested(name, timezone);
     }
   }
 
-  private void refreshCalendarList() {
+  private void notifyCalendarSelected(String name) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onCalendarSelected(name);
+    }
+  }
+
+  private void notifyDateSelected(LocalDate date) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onDateSelected(date);
+    }
+  }
+
+  private void notifyCreateEventRequested(LocalDate date, String subject,
+                                          LocalDate startDate, int startHour, int startMinute,
+                                          LocalDate endDate, int endHour, int endMinute) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onCreateEventRequested(date, subject, startDate, startHour, startMinute,
+          endDate, endHour, endMinute);
+    }
+  }
+
+  private void notifyEditEventRequested(LocalDate date, String eventId,
+                                        String newSubject, int startHour, int startMinute,
+                                        int endHour, int endMinute) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onEditEventRequested(date, eventId, newSubject,
+          startHour, startMinute, endHour, endMinute);
+    }
+  }
+
+  private void notifyMonthChanged(int year, int month) {
+    for (CalendarViewListener listener : listeners) {
+      listener.onMonthChanged(year, month);
+    }
+  }
+
+  // Public methods for controller to update view
+
+  public void setCalendarNames(List<String> names) {
     calendarSelector.removeAllItems();
-    for (String name : controller.getAllCalendarNames()) {
+    for (String name : names) {
       calendarSelector.addItem(name);
     }
   }
 
-  public void refresh() {
-    buildCalendar();
-    updateEventDisplay();
-    refreshCalendarList();
+  public void setSelectedCalendar(String name) {
+    calendarSelector.setSelectedItem(name);
+  }
+
+  public void setEventDisplayText(String text) {
+    eventDisplay.setText(text);
+  }
+
+  public void showError(String message) {
+    JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
+  }
+
+  public void showSuccess(String message) {
+    JOptionPane.showMessageDialog(frame, message, "Success", JOptionPane.INFORMATION_MESSAGE);
   }
 
   public void display() {

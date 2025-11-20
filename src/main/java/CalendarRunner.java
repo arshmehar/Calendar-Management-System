@@ -29,7 +29,7 @@ public class CalendarRunner {
     }
 
 
-    if (args.length < 2) {
+    if (args.length < 2) {l
       System.err.println("Usage: java CalendarApp --mode <interactive|headless> [commandFile]");
       System.exit(1);
     }
