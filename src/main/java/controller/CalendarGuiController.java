@@ -3,6 +3,7 @@ package controller;
 
 import controller.features.CalendarFeatures;
 import java.util.Set;
+import model.DuplicateCalendarException;
 import model.Event;
 import model.IcalendarSystem;
 import model.Icalendar;
@@ -92,8 +93,25 @@ public class CalendarGuiController implements CalendarFeatures {
     }
   }
 
+
+// controller/CalendarGuiController.java
+
+// Update the signature in the class method where executeCommand is called
+// Since executeCommand now throws the exceptions, we must catch them or declare them.
+// We catch them here to display the user-friendly error.
+
+// controller/CalendarGuiController.java
+
+// Update the signature for the entire file to declare the throws
+// (or include the exceptions in the main catch block)
+
   @Override
   public void editCalendarName(String calendarName, String newName) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
     try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_NAME)
           .calendarName(calendarName)
@@ -101,10 +119,28 @@ public class CalendarGuiController implements CalendarFeatures {
           .newPropertyValue(newName)
           .build();
 
+      // 1. EXECUTE: This throws the exception if the name exists.
       executor.executeCommand(cmd, currentCalendar);
+
+      // --- SUCCESS PATH (Only runs if execution succeeds) ---
+
+      // 2. Update the list of calendar names
       updateCalendarList();
-      view.showSuccess("Calendar renamed successfully");
+
+      // 3. Set the current calendar context to the newly renamed calendar
+      currentCalendar = model.getCalendar(newName);
+
+      // Note: executor's success message view.displaySuccess() is ignored
+      // because it writes to the console view (textView).
+      view.showSuccess("Calendar renamed successfully to '" + newName + "'");
+
+    } catch (model.DuplicateCalendarException e) { // <--- CATCH SPECIFIC EXCEPTION!
+      // 4. FAILURE: The text error message was displayed to the console by the Executor.
+      // We now display the GUI error based on the known failure condition.
+      view.showError("Calendar renaming failed: A calendar named '" + newName + "' already exists.");
+
     } catch (Exception e) {
+      // This catches other potential exceptions (CalendarNotFoundException, etc.)
       view.showError("Failed to rename calendar: " + e.getMessage());
     }
   }
