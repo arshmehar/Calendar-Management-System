@@ -6,9 +6,11 @@ import model.Event;
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class CalendarGuiView {
@@ -130,7 +132,7 @@ public class CalendarGuiView {
     eventLabel.setFont(new Font("Arial", Font.BOLD, 16));
     headerPanel.add(eventLabel, BorderLayout.WEST);
 
-    // NEW: Copy Events Button (Bulk Copy)
+    // Copy Events Button (Bulk Copy)
     JButton copyEventsBtn = new JButton("Copy Events...");
     copyEventsBtn.setMargin(new Insets(2, 5, 2, 5));
     copyEventsBtn.setFocusable(false);
@@ -246,9 +248,6 @@ public class CalendarGuiView {
 
   // ==================== COPY LOGIC ====================
 
-  /**
-   * Shows dialog to choose between "Copy on Date" or "Copy Date Range".
-   */
   private void showBulkCopyDialog() {
     if (features == null) return;
 
@@ -270,17 +269,22 @@ public class CalendarGuiView {
   }
 
   private void showCopyEventsOnDateDialog() {
-    // Fields
+    // 1. Fields
     JComboBox<String> targetCalSelector = new JComboBox<>(getCalendarNamesArray());
-    JTextField targetDateField = new JTextField(selectedDate.toString()); // Default to same date
-    targetDateField.setToolTipText("YYYY-MM-DD");
+
+    // Use JSpinner for robust date picking
+    JSpinner targetDateSpinner = new JSpinner(new SpinnerDateModel());
+    targetDateSpinner.setEditor(new JSpinner.DateEditor(targetDateSpinner, "yyyy-MM-dd"));
+    // Default to currently selected date
+    Date defaultDate = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    targetDateSpinner.setValue(defaultDate);
 
     JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
     panel.add(new JLabel("Source Date: " + selectedDate));
     panel.add(new JLabel("Target Calendar:"));
     panel.add(targetCalSelector);
     panel.add(new JLabel("Target Date (YYYY-MM-DD):"));
-    panel.add(targetDateField);
+    panel.add(targetDateSpinner);
 
     int result = JOptionPane.showConfirmDialog(frame, panel, "Copy Events On Date",
         JOptionPane.OK_CANCEL_OPTION);
@@ -288,53 +292,75 @@ public class CalendarGuiView {
     if (result == JOptionPane.OK_OPTION) {
       try {
         String targetCal = (String) targetCalSelector.getSelectedItem();
-        LocalDate targetDate = LocalDate.parse(targetDateField.getText().trim());
-
         if (targetCal == null) return;
+
+        // Convert Date to LocalDate
+        Date utilDate = (Date) targetDateSpinner.getValue();
+        LocalDate targetDate = utilDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         // Execute Command
         features.copyEventsOnDate(selectedDate, targetDate, targetCal);
 
       } catch (Exception e) {
-        showError("Invalid Date Format (Required: YYYY-MM-DD)");
+        showError("Error reading date: " + e.getMessage());
+        e.printStackTrace();
       }
     }
   }
 
   private void showCopyEventsInRangeDialog() {
-    // Fields
-    JTextField startField = new JTextField(selectedDate.toString());
-    JTextField endField = new JTextField(selectedDate.plusDays(7).toString());
+    // 1. Fields using JSpinner for safety
+    JSpinner startSpinner = new JSpinner(new SpinnerDateModel());
+    startSpinner.setEditor(new JSpinner.DateEditor(startSpinner, "yyyy-MM-dd"));
+
+    JSpinner endSpinner = new JSpinner(new SpinnerDateModel());
+    endSpinner.setEditor(new JSpinner.DateEditor(endSpinner, "yyyy-MM-dd"));
+
+    JSpinner targetStartSpinner = new JSpinner(new SpinnerDateModel());
+    targetStartSpinner.setEditor(new JSpinner.DateEditor(targetStartSpinner, "yyyy-MM-dd"));
+
+    // Set defaults
+    Date sDate = Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    Date eDate = Date.from(selectedDate.plusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    startSpinner.setValue(sDate);
+    endSpinner.setValue(eDate);
+    targetStartSpinner.setValue(sDate);
+
     JComboBox<String> targetCalSelector = new JComboBox<>(getCalendarNamesArray());
-    JTextField targetStartField = new JTextField(selectedDate.toString());
 
     JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
-    panel.add(new JLabel("Source Range Start (YYYY-MM-DD):"));
-    panel.add(startField);
-    panel.add(new JLabel("Source Range End (YYYY-MM-DD):"));
-    panel.add(endField);
+    panel.add(new JLabel("Source Range Start:"));
+    panel.add(startSpinner);
+    panel.add(new JLabel("Source Range End:"));
+    panel.add(endSpinner);
     panel.add(new JLabel("Target Calendar:"));
     panel.add(targetCalSelector);
-    panel.add(new JLabel("Target Start Date (YYYY-MM-DD):"));
-    panel.add(targetStartField);
+    panel.add(new JLabel("Target Start Date:"));
+    panel.add(targetStartSpinner);
 
     int result = JOptionPane.showConfirmDialog(frame, panel, "Copy Events In Range",
         JOptionPane.OK_CANCEL_OPTION);
 
     if (result == JOptionPane.OK_OPTION) {
       try {
-        LocalDate start = LocalDate.parse(startField.getText().trim());
-        LocalDate end = LocalDate.parse(endField.getText().trim());
-        LocalDate targetStart = LocalDate.parse(targetStartField.getText().trim());
-        String targetCal = (String) targetCalSelector.getSelectedItem();
+        Date d1 = (Date) startSpinner.getValue();
+        Date d2 = (Date) endSpinner.getValue();
+        Date d3 = (Date) targetStartSpinner.getValue();
 
+        LocalDate start = d1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate end = d2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate targetStart = d3.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        String targetCal = (String) targetCalSelector.getSelectedItem();
         if (targetCal == null) return;
+
+        System.out.println("[DEBUG] Copying range " + start + " -> " + end + " to target start " + targetStart);
 
         // Execute Command
         features.copyEventsBetweenDates(start, end, targetStart, targetCal);
 
       } catch (Exception e) {
-        showError("Invalid Date Format (Required: YYYY-MM-DD)");
+        showError("Error reading dates: " + e.getMessage());
       }
     }
   }

@@ -438,9 +438,9 @@ public class CalendarGuiController implements CalendarFeatures {
 
     try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.COPY_EVENTS_ON_DATE)
-          .startDateTime(sourceDate.atStartOfDay())
-          .targetDateTime(targetDate.atStartOfDay())
           .targetCalendarName(targetCalendarName)
+          .queryDate(sourceDate)
+          .targetDate(targetDate)
           .build();
 
       executor.executeCommand(cmd, currentCalendar);
