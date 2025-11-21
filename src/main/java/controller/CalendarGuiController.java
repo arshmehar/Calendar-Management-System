@@ -39,6 +39,10 @@ public class CalendarGuiController implements CalendarFeatures {
 
     // Initial update
     updateCalendarList();
+    if (currentCalendar != null) {
+      String defaultTz = currentCalendar.getCalendarTimeZone().getId();;
+      view.updateTimezoneDisplay(defaultTz);
+    }
   }
 
 
@@ -70,11 +74,18 @@ public class CalendarGuiController implements CalendarFeatures {
     }
   }
 
+// controller/CalendarGuiController.java
+
   @Override
   public void selectCalendar(String calendarName) {
     try {
       currentCalendar = model.getCalendar(calendarName);
       view.setSelectedCalendar(calendarName);
+
+      // ADD: Update Timezone Display
+      String tzId = currentCalendar.getCalendarTimeZone().getId();;
+      view.updateTimezoneDisplay(tzId);
+
       viewEventsOnDate(LocalDate.now());
     } catch (Exception e) {
       view.showError("Failed to switch calendar: " + e.getMessage());
@@ -100,6 +111,8 @@ public class CalendarGuiController implements CalendarFeatures {
 
 // controller/CalendarGuiController.java
 
+// controller/CalendarGuiController.java
+
   @Override
   public void editCalendarTimezone(String calendarName, String newTimezone) {
     if (currentCalendar == null) {
@@ -117,10 +130,12 @@ public class CalendarGuiController implements CalendarFeatures {
       executor.executeCommand(cmd, currentCalendar);
       view.showSuccess("Timezone updated successfully");
 
-      // --- THIS IS WHERE YOU CALL getSelectedDate() ---
-      LocalDate dateToRefresh = view.getSelectedDate(); // <--- CALL IS HERE
+      // ADD: Update Timezone Display
+      view.updateTimezoneDisplay(newTimezone);
+
+      // ADD: Refresh events using the *selected* date from the view
+      LocalDate dateToRefresh = view.getSelectedDate();
       viewEventsOnDate(dateToRefresh);
-      // ----------------------------------------------
 
     } catch (Exception e) {
       view.showError("Failed to update timezone: " + e.getMessage());

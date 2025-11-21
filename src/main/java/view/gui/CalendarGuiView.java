@@ -25,6 +25,7 @@ public class CalendarGuiView {
   private JPanel calendarGrid;
   private JTextArea eventDisplay;
   private JComboBox<String> calendarSelector;
+  private JLabel timezoneLabel;
 
   private YearMonth currentMonth;
   private LocalDate selectedDate;
@@ -113,6 +114,22 @@ public class CalendarGuiView {
     navPanel.add(todayButton);
 
     topPanel.add(navPanel, BorderLayout.CENTER);
+
+    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+
+    // ----------------------------------------------------------------
+    // CHANGE: Initialize with an empty string, as the controller
+    //         will set the actual value shortly after initialization.
+    timezoneLabel = new JLabel("");
+    // ----------------------------------------------------------------
+
+    timezoneLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+    timezoneLabel.setForeground(Color.GRAY);
+
+    bottomPanel.add(timezoneLabel);
+    bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+
+    topPanel.add(bottomPanel, BorderLayout.SOUTH);
 
     return topPanel;
   }
@@ -474,6 +491,15 @@ public class CalendarGuiView {
    */
   public LocalDate getSelectedDate() {
     return selectedDate;
+  }
+
+  /**
+   * Updates the visible timezone label.
+   */
+  public void updateTimezoneDisplay(String timezoneId) {
+    if (timezoneLabel != null) {
+      timezoneLabel.setText("Current Timezone: " + timezoneId);
+    }
   }
 
 }
