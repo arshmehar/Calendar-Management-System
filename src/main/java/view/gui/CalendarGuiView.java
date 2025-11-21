@@ -182,17 +182,33 @@ public class CalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      if (date.equals(LocalDate.now())) {
-        dayButton.setBackground(Color.YELLOW);
+      // Allow custom styling to show through
+      dayButton.setOpaque(true);
+      dayButton.setBorderPainted(true);
+      dayButton.setFocusPainted(false);
+
+      // DON'T set background to white - let it use default
+      // Only set background for special cases
+
+      boolean isToday = date.equals(LocalDate.now());
+      boolean isSelected = date.equals(selectedDate);
+
+      // Today: yellow background
+      if (isToday) {
+        dayButton.setBackground(Color.PINK);
       }
 
-      if (date.equals(selectedDate)) {
-        dayButton.setBackground(Color.LIGHT_GRAY);
+      // Selected: RED border + bold
+      if (isSelected) {
+        dayButton.setBorder(BorderFactory.createLineBorder(Color.BLUE, 3));
+        dayButton.setFont(new Font("Arial", Font.BOLD, 14));
       }
 
       dayButton.addActionListener(e -> selectDate(date));
       calendarGrid.add(dayButton);
     }
+
+
 
     // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
     int cellsFilled = startDayOfWeek + daysInMonth;
