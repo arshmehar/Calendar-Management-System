@@ -25,6 +25,7 @@ public class CalendarGuiView {
   private JPanel calendarGrid;
   private JTextArea eventDisplay;
   private JComboBox<String> calendarSelector;
+  private JLabel timezoneLabel;
 
   private YearMonth currentMonth;
   private LocalDate selectedDate;
@@ -68,19 +69,23 @@ public class CalendarGuiView {
   private JPanel createTopPanel() {
     JPanel topPanel = new JPanel(new BorderLayout());
 
-    // Left - calendar selection
+    // Left - calendar selection and actions
     JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     leftPanel.add(new JLabel("Calendar:"));
     calendarSelector = new JComboBox<>();
     calendarSelector.addActionListener(e -> {
-      if (features != null) {
+      if (features != null && calendarSelector.getSelectedItem() != null) {
         String selected = (String) calendarSelector.getSelectedItem();
-        if (selected != null) {
-          features.selectCalendar(selected);
-        }
+        features.selectCalendar(selected);
       }
     });
     leftPanel.add(calendarSelector);
+
+    // *** NEW BUTTON: EDIT CALENDAR ***
+    JButton editCalButton = new JButton("Edit Calendar");
+    editCalButton.addActionListener(e -> showEditCalendarDialog());
+    leftPanel.add(editCalButton);
+    // *********************************
 
     JButton newCalButton = new JButton("New Calendar");
     newCalButton.addActionListener(e -> showCreateCalendarDialog());
@@ -88,6 +93,7 @@ public class CalendarGuiView {
 
     topPanel.add(leftPanel, BorderLayout.WEST);
 
+    // ... rest of createTopPanel remains the same ...
     // Center - navigation
     JPanel navPanel = new JPanel(new FlowLayout());
 
@@ -108,6 +114,22 @@ public class CalendarGuiView {
     navPanel.add(todayButton);
 
     topPanel.add(navPanel, BorderLayout.CENTER);
+
+    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+
+    // ----------------------------------------------------------------
+    // CHANGE: Initialize with an empty string, as the controller
+    //         will set the actual value shortly after initialization.
+    timezoneLabel = new JLabel("");
+    // ----------------------------------------------------------------
+
+    timezoneLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+    timezoneLabel.setForeground(Color.GRAY);
+
+    bottomPanel.add(timezoneLabel);
+    bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+
+    topPanel.add(bottomPanel, BorderLayout.SOUTH);
 
     return topPanel;
   }
@@ -177,17 +199,33 @@ public class CalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      if (date.equals(LocalDate.now())) {
-        dayButton.setBackground(Color.YELLOW);
+      // Allow custom styling to show through
+      dayButton.setOpaque(true);
+      dayButton.setBorderPainted(true);
+      dayButton.setFocusPainted(false);
+
+      // DON'T set background to white - let it use default
+      // Only set background for special cases
+
+      boolean isToday = date.equals(LocalDate.now());
+      boolean isSelected = date.equals(selectedDate);
+
+      // Today: yellow background
+      if (isToday) {
+        dayButton.setBackground(Color.PINK);
       }
 
-      if (date.equals(selectedDate)) {
-        dayButton.setBackground(Color.LIGHT_GRAY);
+      // Selected: RED border + bold
+      if (isSelected) {
+        dayButton.setBorder(BorderFactory.createLineBorder(Color.BLUE, 3));
+        dayButton.setFont(new Font("Arial", Font.BOLD, 14));
       }
 
       dayButton.addActionListener(e -> selectDate(date));
       calendarGrid.add(dayButton);
     }
+
+
 
     // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
     int cellsFilled = startDayOfWeek + daysInMonth;
@@ -399,4 +437,69 @@ public class CalendarGuiView {
   public JFrame getFrame() {
     return frame;
   }
+
+  private void showEditCalendarDialog() {
+    if (features == null) return;
+
+    String currentCalendarName = (String) calendarSelector.getSelectedItem();
+    if (currentCalendarName == null) {
+      showError("Please create or select a calendar first.");
+      return;
+    }
+
+    String[] options = {"Rename", "Change Timezone"};
+    int choice = JOptionPane.showOptionDialog(
+        frame,
+        "What would you like to edit for the calendar '" + currentCalendarName + "'?",
+        "Edit Calendar",
+        JOptionPane.DEFAULT_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[0]
+    );
+
+    if (choice == 0) { // Rename
+      String newName = JOptionPane.showInputDialog(frame,
+          "Enter the new name for the calendar:", currentCalendarName);
+
+      if (newName != null && !newName.trim().isEmpty() && !newName.trim().equals(currentCalendarName)) {
+        features.editCalendarName(currentCalendarName, newName.trim());
+        // Controller will handle success/error messages and list updates
+      }
+    } else if (choice == 1) { // Change Timezone
+      String[] timezones = {"America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Kolkata"};
+      String newTimezone = (String) JOptionPane.showInputDialog(frame,
+          "Select the new timezone:", "Change Timezone", JOptionPane.QUESTION_MESSAGE,
+          null, timezones, timezones[0]);
+
+      if (newTimezone != null) {
+        features.editCalendarTimezone(currentCalendarName, newTimezone);
+        // Controller will handle success/error messages
+      }
+    }
+  }
+
+  // view/gui/CalendarGuiView.java
+
+// ... existing methods ...
+
+  /**
+   * Getter for the currently selected date in the view.
+   * Required for the controller to refresh the event panel based on context.
+   * @return the currently selected date.
+   */
+  public LocalDate getSelectedDate() {
+    return selectedDate;
+  }
+
+  /**
+   * Updates the visible timezone label.
+   */
+  public void updateTimezoneDisplay(String timezoneId) {
+    if (timezoneLabel != null) {
+      timezoneLabel.setText("Current Timezone: " + timezoneId);
+    }
+  }
+
 }
