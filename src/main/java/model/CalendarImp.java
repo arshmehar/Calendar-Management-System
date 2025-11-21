@@ -304,8 +304,17 @@ public class CalendarImp implements Icalendar {
       throw new EventNotFoundException("Event not found ");
     }
 
+    String oldSeriesId = original.getSeriesId();
+    String newSeriesId = null;
+
+    if(oldSeriesId != null) {
+      newSeriesId = property.equals("start") ? UUID.randomUUID().toString() : oldSeriesId;
+    }
+
+
+
     removeFromIndexes(original);
-    Event updated = updateEvent(original, property, newValue, null);
+    Event updated = updateEvent(original, property, newValue, newSeriesId);
 
     EventKey key = new EventKey(updated.getSubject(), updated.getStart(), updated.getEnd());
     if (eventsByKey.containsKey(key)) {

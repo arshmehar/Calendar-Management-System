@@ -56,7 +56,7 @@ public class EventPanel extends JPanel {
 
     // Time (always shown)
     DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
-    String timeText = "⏰ " + event.getStart().format(timeFormat) +
+    String timeText = event.getStart().format(timeFormat) +
         " - " + event.getEnd().format(timeFormat);
     JLabel timeLabel = new JLabel(timeText);
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 11));
@@ -93,7 +93,7 @@ public class EventPanel extends JPanel {
 
     // Series indicator (only if part of series)
     if (event.getSeriesId() != null) {
-      JLabel seriesLabel = new JLabel("🔁 Recurring Event");
+      JLabel seriesLabel = new JLabel("Recurring Event");
       seriesLabel.setFont(new Font("Arial", Font.ITALIC, 10));
       seriesLabel.setForeground(new Color(100, 100, 200));
       detailsPanel.add(seriesLabel);
