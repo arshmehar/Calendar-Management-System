@@ -98,8 +98,15 @@ public class CalendarGuiController implements CalendarFeatures {
     }
   }
 
+// controller/CalendarGuiController.java
+
   @Override
   public void editCalendarTimezone(String calendarName, String newTimezone) {
+    if (currentCalendar == null) {
+      view.showError("No calendar selected");
+      return;
+    }
+
     try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_ZONE)
           .calendarName(calendarName)
@@ -109,6 +116,12 @@ public class CalendarGuiController implements CalendarFeatures {
 
       executor.executeCommand(cmd, currentCalendar);
       view.showSuccess("Timezone updated successfully");
+
+      // --- THIS IS WHERE YOU CALL getSelectedDate() ---
+      LocalDate dateToRefresh = view.getSelectedDate(); // <--- CALL IS HERE
+      viewEventsOnDate(dateToRefresh);
+      // ----------------------------------------------
+
     } catch (Exception e) {
       view.showError("Failed to update timezone: " + e.getMessage());
     }

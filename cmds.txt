@@ -18,7 +18,7 @@ after editing refresh screen?
 how to edit series of events?
 event should only show (recurring) if it part of a series. if editing changes its series it should not show
 in timezone selection, allow user to enter timezone also as a text box? or add more timezones in dropdown. or create a searchable box which autocompletes?
-
+add box for all day. if ticked then time selctor will disappear
 
 possible: shift features into different classes from controller such as createEventFeature etc.
 add gui as a mode.

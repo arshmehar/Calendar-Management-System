@@ -447,4 +447,17 @@ public class CalendarGuiView {
     }
   }
 
+  // view/gui/CalendarGuiView.java
+
+// ... existing methods ...
+
+  /**
+   * Getter for the currently selected date in the view.
+   * Required for the controller to refresh the event panel based on context.
+   * @return the currently selected date.
+   */
+  public LocalDate getSelectedDate() {
+    return selectedDate;
+  }
+
 }
