@@ -1,7 +1,8 @@
-// view/gui/CalendarGuiView.java
 package view.gui;
 
 import controller.features.CalendarFeatures;
+import model.Event;
+
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
@@ -10,12 +11,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.Event;
-
-/**
- * Simple GUI view - only displays and notifies listeners.
- * Does NOT call controller or model directly.
- */
 public class CalendarGuiView {
   private final JFrame frame;
   private CalendarFeatures features;
@@ -23,7 +18,6 @@ public class CalendarGuiView {
   // UI Components
   private JLabel monthLabel;
   private JPanel calendarGrid;
-  private JTextArea eventDisplay;
   private JComboBox<String> calendarSelector;
   private JLabel timezoneLabel;
 
@@ -37,7 +31,7 @@ public class CalendarGuiView {
 
     frame = new JFrame("Calendar Application");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setSize(900, 700);
+    frame.setSize(1000, 750);
     frame.setLocationRelativeTo(null);
 
     setupUI();
@@ -54,7 +48,6 @@ public class CalendarGuiView {
     frame.add(createTopPanel(), BorderLayout.NORTH);
 
     // Center - calendar grid
-    // Use 0 rows to allow dynamic addition, fixed 7 columns
     calendarGrid = new JPanel(new GridLayout(0, 7, 5, 5));
     calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     frame.add(calendarGrid, BorderLayout.CENTER);
@@ -81,11 +74,9 @@ public class CalendarGuiView {
     });
     leftPanel.add(calendarSelector);
 
-    // *** NEW BUTTON: EDIT CALENDAR ***
     JButton editCalButton = new JButton("Edit Calendar");
     editCalButton.addActionListener(e -> showEditCalendarDialog());
     leftPanel.add(editCalButton);
-    // *********************************
 
     JButton newCalButton = new JButton("New Calendar");
     newCalButton.addActionListener(e -> showCreateCalendarDialog());
@@ -93,7 +84,6 @@ public class CalendarGuiView {
 
     topPanel.add(leftPanel, BorderLayout.WEST);
 
-    // ... rest of createTopPanel remains the same ...
     // Center - navigation
     JPanel navPanel = new JPanel(new FlowLayout());
 
@@ -116,13 +106,7 @@ public class CalendarGuiView {
     topPanel.add(navPanel, BorderLayout.CENTER);
 
     JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-    // ----------------------------------------------------------------
-    // CHANGE: Initialize with an empty string, as the controller
-    //         will set the actual value shortly after initialization.
     timezoneLabel = new JLabel("");
-    // ----------------------------------------------------------------
-
     timezoneLabel.setFont(new Font("Arial", Font.ITALIC, 11));
     timezoneLabel.setForeground(Color.GRAY);
 
@@ -139,12 +123,23 @@ public class CalendarGuiView {
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     rightPanel.setPreferredSize(new Dimension(350, 0));
 
-    // Header
-    JLabel eventLabel = new JLabel("Events:");
-    eventLabel.setFont(new Font("Arial", Font.BOLD, 14));
-    rightPanel.add(eventLabel, BorderLayout.NORTH);
+    // --- HEADER SECTION ---
+    JPanel headerPanel = new JPanel(new BorderLayout());
 
-    // Scrollable event container
+    JLabel eventLabel = new JLabel("Events");
+    eventLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    headerPanel.add(eventLabel, BorderLayout.WEST);
+
+    // NEW: Copy Events Button (Bulk Copy)
+    JButton copyEventsBtn = new JButton("Copy Events...");
+    copyEventsBtn.setMargin(new Insets(2, 5, 2, 5));
+    copyEventsBtn.setFocusable(false);
+    copyEventsBtn.addActionListener(e -> showBulkCopyDialog());
+    headerPanel.add(copyEventsBtn, BorderLayout.EAST);
+
+    rightPanel.add(headerPanel, BorderLayout.NORTH);
+
+    // --- SCROLLABLE EVENTS ---
     eventContainer = new JPanel();
     eventContainer.setLayout(new BoxLayout(eventContainer, BoxLayout.Y_AXIS));
     eventContainer.setBackground(Color.WHITE);
@@ -154,7 +149,7 @@ public class CalendarGuiView {
     scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
     rightPanel.add(scrollPane, BorderLayout.CENTER);
 
-    // Action buttons
+    // --- ACTION BUTTONS ---
     JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 5));
 
     JButton createEventBtn = new JButton("Create Event");
@@ -174,10 +169,11 @@ public class CalendarGuiView {
     return rightPanel;
   }
 
+  // ==================== CORE DISPLAY METHODS ====================
+
   private void buildCalendar() {
     calendarGrid.removeAll();
 
-    // Day headers - Mon to Sun
     String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
     for (String day : days) {
       JLabel label = new JLabel(day, SwingConstants.CENTER);
@@ -186,10 +182,8 @@ public class CalendarGuiView {
     }
 
     LocalDate firstDay = currentMonth.atDay(1);
-    // Adjust start day to match Mon-Sun (Mon=1 becomes 0, Sun=7 becomes 6)
     int startDayOfWeek = firstDay.getDayOfWeek().getValue() - 1;
 
-    // Add empty slots before start of month
     for (int i = 0; i < startDayOfWeek; i++) {
       calendarGrid.add(new JLabel(""));
     }
@@ -199,23 +193,14 @@ public class CalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      // Allow custom styling to show through
       dayButton.setOpaque(true);
       dayButton.setBorderPainted(true);
       dayButton.setFocusPainted(false);
 
-      // DON'T set background to white - let it use default
-      // Only set background for special cases
-
       boolean isToday = date.equals(LocalDate.now());
       boolean isSelected = date.equals(selectedDate);
 
-      // Today: yellow background
-      if (isToday) {
-        dayButton.setBackground(Color.PINK);
-      }
-
-      // Selected: RED border + bold
+      if (isToday) dayButton.setBackground(Color.PINK);
       if (isSelected) {
         dayButton.setBorder(BorderFactory.createLineBorder(Color.BLUE, 3));
         dayButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -225,9 +210,6 @@ public class CalendarGuiView {
       calendarGrid.add(dayButton);
     }
 
-
-
-    // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
     int cellsFilled = startDayOfWeek + daysInMonth;
     int totalCells = 42;
     for (int i = cellsFilled; i < totalCells; i++) {
@@ -237,6 +219,141 @@ public class CalendarGuiView {
     calendarGrid.revalidate();
     calendarGrid.repaint();
   }
+
+  public void displayEvents(List<Event> events, LocalDate date) {
+    eventContainer.removeAll();
+
+    if (events == null || events.isEmpty()) {
+      JLabel noEvents = new JLabel("No events on " + date);
+      noEvents.setForeground(Color.GRAY);
+      noEvents.setAlignmentX(Component.CENTER_ALIGNMENT);
+      noEvents.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+      eventContainer.add(noEvents);
+    } else {
+      List<String> availableCalendars = getCalendarNames();
+
+      for (Event event : events) {
+        // We pass the list of calendars to the EventPanel so it can populate its dropdown
+        EventPanel eventPanel = new EventPanel(event, features, availableCalendars);
+        eventContainer.add(eventPanel);
+        eventContainer.add(Box.createVerticalStrut(5));
+      }
+    }
+
+    eventContainer.revalidate();
+    eventContainer.repaint();
+  }
+
+  // ==================== COPY LOGIC ====================
+
+  /**
+   * Shows dialog to choose between "Copy on Date" or "Copy Date Range".
+   */
+  private void showBulkCopyDialog() {
+    if (features == null) return;
+
+    Object[] options = {"Copy All on " + selectedDate, "Copy Date Range"};
+    int choice = JOptionPane.showOptionDialog(frame,
+        "Select Copy Mode:",
+        "Copy Events",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[0]);
+
+    if (choice == JOptionPane.YES_OPTION) {
+      showCopyEventsOnDateDialog();
+    } else if (choice == JOptionPane.NO_OPTION) {
+      showCopyEventsInRangeDialog();
+    }
+  }
+
+  private void showCopyEventsOnDateDialog() {
+    // Fields
+    JComboBox<String> targetCalSelector = new JComboBox<>(getCalendarNamesArray());
+    JTextField targetDateField = new JTextField(selectedDate.toString()); // Default to same date
+    targetDateField.setToolTipText("YYYY-MM-DD");
+
+    JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+    panel.add(new JLabel("Source Date: " + selectedDate));
+    panel.add(new JLabel("Target Calendar:"));
+    panel.add(targetCalSelector);
+    panel.add(new JLabel("Target Date (YYYY-MM-DD):"));
+    panel.add(targetDateField);
+
+    int result = JOptionPane.showConfirmDialog(frame, panel, "Copy Events On Date",
+        JOptionPane.OK_CANCEL_OPTION);
+
+    if (result == JOptionPane.OK_OPTION) {
+      try {
+        String targetCal = (String) targetCalSelector.getSelectedItem();
+        LocalDate targetDate = LocalDate.parse(targetDateField.getText().trim());
+
+        if (targetCal == null) return;
+
+        // Execute Command
+        features.copyEventsOnDate(selectedDate, targetDate, targetCal);
+
+      } catch (Exception e) {
+        showError("Invalid Date Format (Required: YYYY-MM-DD)");
+      }
+    }
+  }
+
+  private void showCopyEventsInRangeDialog() {
+    // Fields
+    JTextField startField = new JTextField(selectedDate.toString());
+    JTextField endField = new JTextField(selectedDate.plusDays(7).toString());
+    JComboBox<String> targetCalSelector = new JComboBox<>(getCalendarNamesArray());
+    JTextField targetStartField = new JTextField(selectedDate.toString());
+
+    JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+    panel.add(new JLabel("Source Range Start (YYYY-MM-DD):"));
+    panel.add(startField);
+    panel.add(new JLabel("Source Range End (YYYY-MM-DD):"));
+    panel.add(endField);
+    panel.add(new JLabel("Target Calendar:"));
+    panel.add(targetCalSelector);
+    panel.add(new JLabel("Target Start Date (YYYY-MM-DD):"));
+    panel.add(targetStartField);
+
+    int result = JOptionPane.showConfirmDialog(frame, panel, "Copy Events In Range",
+        JOptionPane.OK_CANCEL_OPTION);
+
+    if (result == JOptionPane.OK_OPTION) {
+      try {
+        LocalDate start = LocalDate.parse(startField.getText().trim());
+        LocalDate end = LocalDate.parse(endField.getText().trim());
+        LocalDate targetStart = LocalDate.parse(targetStartField.getText().trim());
+        String targetCal = (String) targetCalSelector.getSelectedItem();
+
+        if (targetCal == null) return;
+
+        // Execute Command
+        features.copyEventsBetweenDates(start, end, targetStart, targetCal);
+
+      } catch (Exception e) {
+        showError("Invalid Date Format (Required: YYYY-MM-DD)");
+      }
+    }
+  }
+
+  // ==================== UTILS & HELPERS ====================
+
+  private List<String> getCalendarNames() {
+    List<String> names = new ArrayList<>();
+    for (int i = 0; i < calendarSelector.getItemCount(); i++) {
+      names.add(calendarSelector.getItemAt(i));
+    }
+    return names;
+  }
+
+  private String[] getCalendarNamesArray() {
+    return getCalendarNames().toArray(new String[0]);
+  }
+
+  // ==================== STANDARD ACTIONS ====================
 
   private void selectDate(LocalDate date) {
     selectedDate = date;
@@ -267,11 +384,10 @@ public class CalendarGuiView {
     monthLabel.setText(currentMonth.format(formatter));
   }
 
-  // ==================== DIALOG METHODS ====================
+  // ==================== DIALOGS (CREATE/EDIT) ====================
 
   private void showCreateCalendarDialog() {
     if (features == null) return;
-
     String name = JOptionPane.showInputDialog(frame, "Enter calendar name:");
     if (name == null || name.trim().isEmpty()) return;
 
@@ -281,145 +397,83 @@ public class CalendarGuiView {
         "Select timezone:", "Timezone", JOptionPane.QUESTION_MESSAGE,
         null, timezones, timezones[0]);
 
-    if (timezone != null) {
-      features.createCalendar(name.trim(), timezone);
+    if (timezone != null) features.createCalendar(name.trim(), timezone);
+  }
+
+  private void showEditCalendarDialog() {
+    if (features == null) return;
+    String currentCalendarName = (String) calendarSelector.getSelectedItem();
+    if (currentCalendarName == null) {
+      showError("Please create or select a calendar first.");
+      return;
+    }
+    String[] options = {"Rename", "Change Timezone"};
+    int choice = JOptionPane.showOptionDialog(frame, "Edit Calendar: " + currentCalendarName,
+        "Edit Calendar", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, options, options[0]);
+
+    if (choice == 0) { // Rename
+      String newName = JOptionPane.showInputDialog(frame, "Enter new name:", currentCalendarName);
+      if (newName != null && !newName.trim().isEmpty() && !newName.trim().equals(currentCalendarName)) {
+        features.editCalendarName(currentCalendarName, newName.trim());
+      }
+    } else if (choice == 1) { // Timezone
+      String[] timezones = {"America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Kolkata"};
+      String newTz = (String) JOptionPane.showInputDialog(frame, "Select new timezone:",
+          "Change Timezone", JOptionPane.QUESTION_MESSAGE, null, timezones, timezones[0]);
+      if (newTz != null) features.editCalendarTimezone(currentCalendarName, newTz);
     }
   }
 
   private void showCreateEventDialog() {
     if (features == null) return;
-
     EventCreationDialog dialog = new EventCreationDialog(frame, selectedDate, false);
     dialog.setVisible(true);
-
     if (dialog.isConfirmed()) {
-      features.createSingleEvent(
-          dialog.getSubject(),
-          dialog.getStartDateTime(),
-          dialog.getEndDateTime()
-      );
+      features.createSingleEvent(dialog.getSubject(), dialog.getStartDateTime(), dialog.getEndDateTime());
     }
   }
 
   private void showCreateRecurringDialog() {
     if (features == null) return;
-
     EventCreationDialog dialog = new EventCreationDialog(frame, selectedDate, true);
     dialog.setVisible(true);
-
     if (dialog.isConfirmed()) {
       if (dialog.isOccurrencesBased()) {
-        features.createRecurringEventWithOccurrences(
-            dialog.getSubject(),
-            dialog.getStartDateTime(),
-            dialog.getEndDateTime(),
-            dialog.getSelectedWeekdays(),
-            dialog.getOccurrences()
-        );
+        features.createRecurringEventWithOccurrences(dialog.getSubject(), dialog.getStartDateTime(),
+            dialog.getEndDateTime(), dialog.getSelectedWeekdays(), dialog.getOccurrences());
       } else {
-        features.createRecurringEventUntilDate(
-            dialog.getSubject(),
-            dialog.getStartDateTime(),
-            dialog.getEndDateTime(),
-            dialog.getSelectedWeekdays(),
-            dialog.getUntilDate()
-        );
+        features.createRecurringEventUntilDate(dialog.getSubject(), dialog.getStartDateTime(),
+            dialog.getEndDateTime(), dialog.getSelectedWeekdays(), dialog.getUntilDate());
       }
     }
   }
 
-  private void showEditEventDialog() {
-    if (features == null) return;
-
-    String eventName = JOptionPane.showInputDialog(frame,
-        "Enter event name to edit:");
-    if (eventName == null || eventName.trim().isEmpty()) return;
-
-    String property = "subject";
-    String newValue = JOptionPane.showInputDialog(frame,
-        "Enter new subject:");
-    if (newValue == null || newValue.trim().isEmpty()) return;
-
-    // For simplicity, just edit single event
-    // You can add radio buttons to choose edit scope
-    features.editSingleEvent(
-        eventName.trim(),
-        selectedDate.atTime(10, 0), // Placeholder
-        selectedDate.atTime(11, 0),
-        property,
-        newValue.trim()
-    );
-  }
-
-  private void showCopyEventDialog() {
-    if (features == null) return;
-
-    // Simple copy dialog - can be enhanced
-    JOptionPane.showMessageDialog(frame,
-        "Copy feature - implement based on needs",
-        "Copy Event",
-        JOptionPane.INFORMATION_MESSAGE);
-  }
-
   private void showExportDialog() {
     if (features == null) return;
-
     String[] options = {"CSV", "iCal"};
-    int choice = JOptionPane.showOptionDialog(frame,
-        "Select export format:",
-        "Export Calendar",
-        JOptionPane.YES_NO_CANCEL_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null,
-        options,
-        options[0]);
+    int choice = JOptionPane.showOptionDialog(frame, "Select export format:", "Export Calendar",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
     if (choice == 0 || choice == 1) {
       JFileChooser fileChooser = new JFileChooser();
       if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
         String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-
-        if (choice == 0) {
-          features.exportToCSV(filePath);
-        } else {
-          features.exportToICal(filePath);
-        }
+        if (choice == 0) features.exportToCSV(filePath);
+        else features.exportToICal(filePath);
       }
     }
   }
 
-  // ==================== PUBLIC UPDATE METHODS ====================
+  // ==================== PUBLIC ACCESSORS ====================
 
   public void setCalendarNames(List<String> names) {
     calendarSelector.removeAllItems();
-    for (String name : names) {
-      calendarSelector.addItem(name);
-    }
+    for (String name : names) calendarSelector.addItem(name);
   }
 
   public void setSelectedCalendar(String name) {
     calendarSelector.setSelectedItem(name);
-  }
-
-  public void displayEvents(List<Event> events, LocalDate date) {
-    eventContainer.removeAll();
-
-    if (events == null || events.isEmpty()) {
-      JLabel noEvents = new JLabel("No events on " + date);
-      noEvents.setForeground(Color.GRAY);
-      noEvents.setAlignmentX(Component.CENTER_ALIGNMENT);
-      noEvents.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-      eventContainer.add(noEvents);
-    } else {
-      for (Event event : events) {
-        EventPanel eventPanel = new EventPanel(event, date, features);
-        eventContainer.add(eventPanel);
-        eventContainer.add(Box.createVerticalStrut(5));
-      }
-    }
-
-    eventContainer.revalidate();
-    eventContainer.repaint();
   }
 
   public void showError(String message) {
@@ -434,72 +488,11 @@ public class CalendarGuiView {
     frame.setVisible(true);
   }
 
-  public JFrame getFrame() {
-    return frame;
-  }
-
-  private void showEditCalendarDialog() {
-    if (features == null) return;
-
-    String currentCalendarName = (String) calendarSelector.getSelectedItem();
-    if (currentCalendarName == null) {
-      showError("Please create or select a calendar first.");
-      return;
-    }
-
-    String[] options = {"Rename", "Change Timezone"};
-    int choice = JOptionPane.showOptionDialog(
-        frame,
-        "What would you like to edit for the calendar '" + currentCalendarName + "'?",
-        "Edit Calendar",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null,
-        options,
-        options[0]
-    );
-
-    if (choice == 0) { // Rename
-      String newName = JOptionPane.showInputDialog(frame,
-          "Enter the new name for the calendar:", currentCalendarName);
-
-      if (newName != null && !newName.trim().isEmpty() && !newName.trim().equals(currentCalendarName)) {
-        features.editCalendarName(currentCalendarName, newName.trim());
-        // Controller will handle success/error messages and list updates
-      }
-    } else if (choice == 1) { // Change Timezone
-      String[] timezones = {"America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Kolkata"};
-      String newTimezone = (String) JOptionPane.showInputDialog(frame,
-          "Select the new timezone:", "Change Timezone", JOptionPane.QUESTION_MESSAGE,
-          null, timezones, timezones[0]);
-
-      if (newTimezone != null) {
-        features.editCalendarTimezone(currentCalendarName, newTimezone);
-        // Controller will handle success/error messages
-      }
-    }
-  }
-
-  // view/gui/CalendarGuiView.java
-
-// ... existing methods ...
-
-  /**
-   * Getter for the currently selected date in the view.
-   * Required for the controller to refresh the event panel based on context.
-   * @return the currently selected date.
-   */
   public LocalDate getSelectedDate() {
     return selectedDate;
   }
 
-  /**
-   * Updates the visible timezone label.
-   */
   public void updateTimezoneDisplay(String timezoneId) {
-    if (timezoneLabel != null) {
-      timezoneLabel.setText("Current Timezone: " + timezoneId);
-    }
+    if (timezoneLabel != null) timezoneLabel.setText("Current Timezone: " + timezoneId);
   }
-
 }
