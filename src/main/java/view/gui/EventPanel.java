@@ -111,12 +111,6 @@ public class EventPanel extends JPanel {
     editButton.addActionListener(e -> showEditOptions());
     buttonPanel.add(editButton);
 
-    JButton copyButton = new JButton("Copy");
-    copyButton.setFont(new Font("Arial", Font.PLAIN, 10));
-    copyButton.setPreferredSize(new Dimension(60, 25));
-    copyButton.addActionListener(e -> showCopyDialog());
-    buttonPanel.add(copyButton);
-
     add(buttonPanel, BorderLayout.EAST);
 
     // Hover effect
@@ -217,15 +211,4 @@ public class EventPanel extends JPanel {
     }
   }
 
-  private void showCopyDialog() {
-    JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-
-    CopyEventDialog copyDialog = new CopyEventDialog(
-        parentFrame,
-        event,
-        displayDate,
-        features
-    );
-    copyDialog.setVisible(true);
-  }
 }

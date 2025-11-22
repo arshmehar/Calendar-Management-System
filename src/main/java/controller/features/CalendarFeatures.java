@@ -98,27 +98,6 @@ public interface CalendarFeatures {
    */
   void checkStatus(LocalDateTime dateTime);
 
-  // ==================== EVENT COPYING ====================
-
-  /**
-   * Copy a single event to another calendar.
-   */
-  void copySingleEvent(String subject, LocalDateTime sourceDateTime,
-                       LocalDateTime targetDateTime,
-                       String targetCalendarName);
-
-  /**
-   * Copy all events on a specific date to another calendar.
-   */
-  void copyEventsOnDate(LocalDate sourceDate, LocalDate targetDate,
-                        String targetCalendarName);
-
-  /**
-   * Copy events between dates to another calendar.
-   */
-  void copyEventsBetweenDates(LocalDate sourceStartDate, LocalDate sourceEndDate,
-                              LocalDate targetStartDate,
-                              String targetCalendarName);
 
   // ==================== EXPORT ====================
 

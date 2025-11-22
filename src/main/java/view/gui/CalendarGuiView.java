@@ -351,15 +351,6 @@ public class CalendarGuiView {
     );
   }
 
-  private void showCopyEventDialog() {
-    if (features == null) return;
-
-    // Simple copy dialog - can be enhanced
-    JOptionPane.showMessageDialog(frame,
-        "Copy feature - implement based on needs",
-        "Copy Event",
-        JOptionPane.INFORMATION_MESSAGE);
-  }
 
   private void showExportDialog() {
     if (features == null) return;
