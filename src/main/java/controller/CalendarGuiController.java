@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
+import view.gui.GuiViewAdapter;
 /**
  * GUI Controller - implements listener to handle view events.
  * Only the controller calls the model.
@@ -31,7 +31,8 @@ public class CalendarGuiController implements CalendarFeatures {
     this.model = model;
     this.view = new CalendarGuiView();
     IcalendarView textView = new CalendarView();
-    this.executor = new CommandExecutor(model, textView);
+    IcalendarView viewAdapter = new GuiViewAdapter(this.view);
+    this.executor = new CommandExecutor(model, viewAdapter);
 
     view.setFeatures(this);
 

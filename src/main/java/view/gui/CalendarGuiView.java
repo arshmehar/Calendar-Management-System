@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+
 public class CalendarGuiView {
   private final JFrame frame;
   private CalendarFeatures features;
@@ -520,5 +521,9 @@ public class CalendarGuiView {
 
   public void updateTimezoneDisplay(String timezoneId) {
     if (timezoneLabel != null) timezoneLabel.setText("Current Timezone: " + timezoneId);
+  }
+
+  public JFrame getFrame() {
+    return this.frame;
   }
 }
