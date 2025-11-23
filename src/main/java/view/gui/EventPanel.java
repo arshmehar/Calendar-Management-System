@@ -55,7 +55,14 @@ public class EventPanel extends JPanel {
     detailsPanel.add(Box.createVerticalStrut(3));
 
     // Time (always shown)
-    DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
+    DateTimeFormatter timeFormat;
+    if (event.getStart().toLocalDate().equals(event.getEnd().toLocalDate())) {
+      timeFormat = DateTimeFormatter.ofPattern("h:mm a");
+    }
+    else{
+      timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a");
+    }
+
     String timeText = event.getStart().format(timeFormat) +
         " - " + event.getEnd().format(timeFormat);
     JLabel timeLabel = new JLabel(timeText);

@@ -218,8 +218,9 @@ public class EditEventDialog extends JDialog {
             d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
             t.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
         );
-        // Return in format parsable by your command parser (usually ISO)
-        return ldt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        return ldt.format(formatter);
 
       case "status":
         return (String) statusCombo.getSelectedItem();
