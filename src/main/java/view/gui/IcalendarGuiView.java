@@ -1,10 +1,10 @@
 package view.gui;
 
 import controller.features.CalendarFeatures;
-import model.Event;
-import javax.swing.JFrame;
 import java.time.LocalDate;
 import java.util.List;
+import javax.swing.JFrame;
+import model.Event;
 
 /**
  * Interface for the Graphical User Interface of the Calendar Application.

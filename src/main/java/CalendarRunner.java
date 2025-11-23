@@ -2,7 +2,6 @@ import controller.ApplicationMode;
 import controller.CalendarController;
 import controller.IcalendarController;
 import java.io.IOException;
-import javax.swing.SwingUtilities;
 import model.CalendarSystem;
 import model.IcalendarSystem;
 import view.CalendarView;
@@ -26,10 +25,7 @@ public class CalendarRunner {
       IcalendarController controller = new CalendarController(model);
       controller.run(mode, commandFilePath);
       return;
-    }
-
-
-    else if (args.length < 2) {
+    } else if (args.length < 2) {
       System.err.println("Usage: java CalendarApp --mode <interactive|headless> [commandFile]");
       System.exit(1);
     }
@@ -50,8 +46,7 @@ public class CalendarRunner {
 
       commandFilePath = args[2];
 
-    }
-    else {
+    } else {
       System.err.println("Invalid mode. Must be 'interactive' or 'headless'");
       System.exit(1);
       return;
