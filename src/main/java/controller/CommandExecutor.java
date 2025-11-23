@@ -3,8 +3,11 @@ package controller;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import model.CalendarNotFoundException;
 import model.DuplicateCalendarException;
 import model.DuplicateEventException;
@@ -19,11 +22,13 @@ class CommandExecutor {
 
   private final IcalendarSystem model;
   private final IcalendarView view;
-  private Icalendar currentCalendar;
+  private final Map<CommandType, Consumer<ParsedCommand>> commandHandlers;
 
   public CommandExecutor(IcalendarSystem model, IcalendarView view) {
     this.model = model;
     this.view = view;
+    this.commandHandlers = new HashMap<>();
+    initializeCommandHandlers();
   }
 
   protected void executeCommand(ParsedCommand cmd, Icalendar currentCalendar)
@@ -36,84 +41,15 @@ class CommandExecutor {
           "Current calendar context has not been set. Command Invalid.");
     }
 
-    switch (type) {
-      case CREATE_SINGLE_EVENT:
-        handleSingleEventCreation(cmd);
-        break;
 
-      case CREATE_ALL_DAY_EVENT:
-        handleSingleEventCreation(cmd);
-        break;
+    Consumer<ParsedCommand> handler = commandHandlers.get(type);
 
-      case CREATE_SERIES_REPEATING_N_TIMES:
-        handleNseriesCreation(cmd);
-        break;
-
-      case CREATE_SERIES_UNTIL:
-        handleSeriesUntilCreation(cmd);
-        break;
-
-      case EDIT_SINGLE_EVENT:
-        handleSingleEventEditing(cmd);
-        break;
-
-      case EDIT_EVENTS:
-        handleEventsEditing(cmd);
-        break;
-
-      case EDIT_SERIES:
-        handleEventSeriesEditing(cmd);
-        break;
-
-      case PRINT_EVENTS_ON:
-        handlePrintEventsOnQuery(cmd);
-        break;
-
-      case PRINT_EVENTS_FROM:
-        handlePrintEventsFromQuery(cmd);
-        break;
-
-      case SHOW_STATUS:
-        handleStatus(cmd);
-        break;
-
-      case EXPORT_CALENDAR_CSV:
-        handleExportCsv(cmd);
-        break;
-
-      case EXPORT_CALENDAR_ICAL:
-        handleExportIcal(cmd);
-        break;
-
-      case CREATE_CALENDAR:
-        handleCreateCalendar(cmd);
-        break;
-
-      case EDIT_CALENDAR_NAME:
-        handleEditCalendar(cmd, true);
-        break;
-
-      case EDIT_CALENDAR_ZONE:
-        handleEditCalendar(cmd, false);
-        break;
-
-      case COPY_SINGLE_EVENT:
-        handleCopySingleEvent(cmd);
-        break;
-
-      case COPY_EVENTS_ON_DATE:
-        handleCopyEventsOnDate(cmd);
-        break;
-
-      case COPY_EVENTS_BETWEEN_DATES:
-        handleCopyEventsBetween(cmd);
-        break;
-
-      default:
-        view.displayError("Unknown command: ");
-
-
+    if (handler != null) {
+      handler.accept(cmd);
+    } else {
+      view.displayError("Unknown command: " + type);
     }
+
   }
 
   Icalendar handleContextSetting(ParsedCommand cmd) {
@@ -371,5 +307,33 @@ class CommandExecutor {
       view.displayError("Error copying events: " + e.getMessage());
     }
   }
+  /**
+   * Registers all command handlers.
+   * Replaces the switch cases with direct method references.
+   */
+  private void initializeCommandHandlers() {
+    commandHandlers.put(CommandType.CREATE_SINGLE_EVENT, this::handleSingleEventCreation);
+    commandHandlers.put(CommandType.CREATE_ALL_DAY_EVENT, this::handleSingleEventCreation);
+    commandHandlers.put(CommandType.CREATE_SERIES_REPEATING_N_TIMES, this::handleNseriesCreation);
+    commandHandlers.put(CommandType.CREATE_SERIES_UNTIL, this::handleSeriesUntilCreation);
 
+    commandHandlers.put(CommandType.EDIT_SINGLE_EVENT, this::handleSingleEventEditing);
+    commandHandlers.put(CommandType.EDIT_EVENTS, this::handleEventsEditing);
+    commandHandlers.put(CommandType.EDIT_SERIES, this::handleEventSeriesEditing);
+
+    commandHandlers.put(CommandType.PRINT_EVENTS_ON, this::handlePrintEventsOnQuery);
+    commandHandlers.put(CommandType.PRINT_EVENTS_FROM, this::handlePrintEventsFromQuery);
+    commandHandlers.put(CommandType.SHOW_STATUS, this::handleStatus);
+
+
+    commandHandlers.put(CommandType.EXPORT_CALENDAR_CSV, this::handleExportCsv);
+    commandHandlers.put(CommandType.EXPORT_CALENDAR_ICAL, this::handleExportIcal);
+
+    commandHandlers.put(CommandType.CREATE_CALENDAR, this::handleCreateCalendar);
+    commandHandlers.put(CommandType.EDIT_CALENDAR_NAME, cmd -> handleEditCalendar(cmd, true));
+    commandHandlers.put(CommandType.EDIT_CALENDAR_ZONE, cmd -> handleEditCalendar(cmd, false));
+    commandHandlers.put(CommandType.COPY_SINGLE_EVENT, this::handleCopySingleEvent);
+    commandHandlers.put(CommandType.COPY_EVENTS_ON_DATE, this::handleCopyEventsOnDate);
+    commandHandlers.put(CommandType.COPY_EVENTS_BETWEEN_DATES, this::handleCopyEventsBetween);
+  }
 }
