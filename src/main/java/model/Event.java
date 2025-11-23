@@ -144,11 +144,6 @@ public class Event {
         && Objects.equals(end, event.end);
   }
 
-  @Override
-  public String toString() {
-    return "Event{" +subject + " " + start + " " + end + "}";
-  }
-
   /**
    * Returns a hash code value for this event.
    * Hash code is based on subject, start time, and end time only.

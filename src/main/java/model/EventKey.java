@@ -50,11 +50,6 @@ public class EventKey {
         && Objects.equals(end, eventKey.end);
   }
 
-  @Override
-  public String toString() {
-    return ("Subject: " + this.subject + " Start: " + this.start + " End: " + this.end);
-  }
-
   /**
    * Returns a hash code value for this EventKey.
    * Hash code is based on subject, start time, and end time.
