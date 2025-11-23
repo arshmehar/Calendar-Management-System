@@ -166,8 +166,8 @@ class CommandExecutor {
 
       currentCalendar.editAllInSeries(subject, startTime, property, newValue);
       view.displaySuccess(
-          "All events in series edited successfully. Property: "
-              + property + ", New Value: "
+          "All events in series edited successfully. "
+              + property + " changed to: "
               + newValue);
     } catch (EventNotFoundException | DuplicateEventException e) {
       view.displayError(e.getMessage());
