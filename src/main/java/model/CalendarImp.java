@@ -305,18 +305,15 @@ public class CalendarImp implements Icalendar {
     }
 
     String oldSeriesId = original.getSeriesId();
-    String newSeriesId = null;
+    String newSeriesId;
 
-    if(oldSeriesId != null) {
-      newSeriesId = property.equals("start") ? UUID.randomUUID().toString() : oldSeriesId;
-    }
-
-
+    newSeriesId = property.equals("start") ? null : oldSeriesId;
 
     removeFromIndexes(original);
     Event updated = updateEvent(original, property, newValue, newSeriesId);
 
     EventKey key = new EventKey(updated.getSubject(), updated.getStart(), updated.getEnd());
+
     if (eventsByKey.containsKey(key)) {
       addToIndexes(original);
       throw new DuplicateEventException(
