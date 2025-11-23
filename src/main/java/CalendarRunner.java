@@ -1,6 +1,5 @@
 import controller.ApplicationMode;
 import controller.CalendarController;
-import controller.CalendarGuiController;
 import controller.IcalendarController;
 import java.io.IOException;
 import javax.swing.SwingUtilities;
@@ -23,10 +22,6 @@ public class CalendarRunner {
     String commandFilePath = null;
 
     if (args.length == 0) {
-//      SwingUtilities.invokeLater(() -> {
-//        CalendarGuiController controller = new CalendarGuiController(model);
-//        controller.run();
-//      });
       mode = ApplicationMode.GUI;
       IcalendarController controller = new CalendarController(model);
       controller.run(mode, commandFilePath);

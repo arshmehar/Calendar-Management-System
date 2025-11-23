@@ -121,8 +121,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
   }
 
   // ==================== GUI FEATURES IMPLEMENTATION ====================
-  // Note: These methods preserve the specific try-catch blocks and logic
-  // from your original CalendarGuiController.
 
   protected void createDefaultCalendar() {
     try {
@@ -136,7 +134,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   @Override
   public void createCalendar(String name, String timezone) {
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_CALENDAR)
           .calendarName(name)
           .calendarTimeZone(timezone)
@@ -144,10 +141,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       updateCalendarList();
-      guiView.showSuccess("Calendar '" + name + "' created successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to create calendar: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -172,7 +166,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_NAME)
           .calendarName(calendarName)
           .propertyToEdit("name")
@@ -182,14 +175,9 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       commandExecutor.executeCommand(cmd, currentCalendar);
 
       updateCalendarList();
-      currentCalendar = model.getCalendar(newName);
-      guiView.showSuccess("Calendar renamed successfully to '" + newName + "'");
+//      currentCalendar = model.getCalendar(newName);
 
-    } catch (DuplicateCalendarException e) {
-      guiView.showError("Calendar renaming failed: A calendar named '" + newName + "' already exists.");
-    } catch (Exception e) {
-      guiView.showError("Failed to rename calendar: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -199,7 +187,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_ZONE)
           .calendarName(calendarName)
           .propertyToEdit("timezone")
@@ -207,15 +194,12 @@ public class CalendarController implements IcalendarController, CalendarFeatures
           .build();
 
       commandExecutor.executeCommand(cmd, currentCalendar);
-      guiView.showSuccess("Timezone updated successfully");
 
       guiView.updateTimezoneDisplay(newTimezone);
       LocalDate dateToRefresh = guiView.getSelectedDate();
       viewEventsOnDate(dateToRefresh);
 
-    } catch (Exception e) {
-      guiView.showError("Failed to update timezone: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -286,7 +270,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
           .subject(subject)
           .startDateTime(start)
@@ -297,10 +280,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(start.toLocalDate());
-      guiView.showSuccess("Recurring event created successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to create recurring event: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -311,7 +291,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
           .subject(subject)
           .startDateTime(start)
@@ -322,10 +301,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(start.toLocalDate());
-      guiView.showSuccess("Event updated successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to edit event: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -335,8 +311,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
           .subject(subject)
           .startDateTime(startDateTime)
@@ -346,10 +320,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(startDateTime.toLocalDate());
-      guiView.showSuccess("Events updated successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to edit events: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -359,8 +330,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
           .subject(subject)
           .startDateTime(anyEventStart)
@@ -370,10 +339,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(anyEventStart.toLocalDate());
-      guiView.showSuccess("Series updated successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to edit series: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -389,21 +355,13 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   @Override
   public void viewEventsFromDate(LocalDateTime startDateTime) {
-    if (currentCalendar == null) {
-      guiView.showError("No calendar selected");
-      return;
-    }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.PRINT_EVENTS_FROM)
           .startDateTime(startDateTime)
           .build();
 
       commandExecutor.executeCommand(cmd, currentCalendar);
-      guiView.showSuccess("Events displayed in console");
-    } catch (Exception e) {
-      guiView.showError("Failed to query events: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -412,17 +370,13 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.SHOW_STATUS)
           .startDateTime(dateTime)
           .build();
 
       commandExecutor.executeCommand(cmd, currentCalendar);
-      // Executor prints status to console
-    } catch (Exception e) {
-      guiView.showError("Failed to check status: " + e.getMessage());
-    }
+
+
   }
 
   @Override
@@ -432,16 +386,11 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_CSV)
           .fileName(filePath)
           .build();
 
       commandExecutor.executeCommand(cmd, currentCalendar);
-      guiView.showSuccess("Calendar exported to CSV successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to export to CSV: " + e.getMessage());
-    }
   }
 
   @Override
@@ -451,16 +400,11 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_ICAL)
           .fileName(filePath)
           .build();
 
       commandExecutor.executeCommand(cmd, currentCalendar);
-      guiView.showSuccess("Calendar exported to iCal successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to export to iCal: " + e.getMessage());
-    }
   }
 
   void updateCalendarList() {
