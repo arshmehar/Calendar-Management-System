@@ -14,8 +14,8 @@ import model.Event;
 public class CalendarView implements IcalendarView {
 
 
-  protected final DateTimeFormatter dateFormatter;
-  protected final DateTimeFormatter dateTimeFormatter;
+  private final DateTimeFormatter dateFormatter;
+  private final DateTimeFormatter dateTimeFormatter;
 
   /**
    * Constructs an CalendarView with standard date and time formatters.
