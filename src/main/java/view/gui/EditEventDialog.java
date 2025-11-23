@@ -53,11 +53,19 @@ public class EditEventDialog extends JDialog {
     mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
     // 1. Info Header
-    String scopeText = switch (editScope) {
-      case "single" -> "this event";
-      case "fromDate" -> "this and future events";
-      default -> "all events in series";
-    };
+    String scopeText;
+    switch (editScope) {
+      case "single":
+        scopeText = "this event";
+        break;
+      case "fromDate":
+        scopeText = "this and future events";
+        break;
+      default:
+        scopeText = "all events in series";
+        break;
+    }
+
     JLabel infoLabel = new JLabel("Editing " + scopeText + ": " + event.getSubject());
     infoLabel.setFont(new Font("Arial", Font.BOLD, 12));
     mainPanel.add(infoLabel, BorderLayout.NORTH);
