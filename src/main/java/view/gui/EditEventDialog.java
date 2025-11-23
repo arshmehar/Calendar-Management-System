@@ -72,7 +72,7 @@ public class EditEventDialog extends JDialog {
     // Note: Keys must match what the controller expects ("subject" -> "name") or be mapped later
     // For simplicity here, we use display names and map them in getters if needed,
     // or use the lowercase names the controller likely uses.
-    String[] properties = {"name", "description", "location", "start", "end", "status"};
+    String[] properties = {"subject", "description", "location", "start", "end", "status"};
     propertyCombo = new JComboBox<>(properties);
     propertyCombo.addActionListener(e -> updateInputView());
     propPanel.add(propertyCombo, BorderLayout.CENTER);
@@ -166,7 +166,7 @@ public class EditEventDialog extends JDialog {
 
       default: // name, location, description
         String textVal = "";
-        if (selected.equals("name")) textVal = event.getSubject();
+        if (selected.equals("subject")) textVal = event.getSubject();
         else if (selected.equals("location")) textVal = event.getLocation();
         else if (selected.equals("description")) textVal = event.getDescription();
 

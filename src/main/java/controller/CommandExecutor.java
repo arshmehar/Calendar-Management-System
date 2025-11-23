@@ -27,7 +27,7 @@ class CommandExecutor {
   }
 
   protected void executeCommand(ParsedCommand cmd, Icalendar currentCalendar)
-      throws IllegalStateException, DuplicateCalendarException, InvalidTimezoneException {
+      throws IllegalStateException {
     CommandType type = cmd.getCommandType();
     this.currentCalendar = currentCalendar;
 
@@ -133,36 +133,11 @@ class CommandExecutor {
 
   }
 
-//  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit) {
-//
-//    try {
-//      String calName = cmd.getCalendarName();
-//      String newProperty = cmd.getNewPropertyValue();
-//
-//      if (isNameEdit) {
-//        model.renameCalendar(calName, newProperty);
-//        view.displaySuccess(
-//            "Name of calendar:" + calName + " edited to " + newProperty + " successfully");
-//      } else {
-//        model.changeTimezone(calName, newProperty);
-//        view.displaySuccess(
-//            "Timezone of calendar:" + calName + " edited to " + newProperty + " successfully");
-//      }
-//    } catch (DuplicateCalendarException | InvalidTimezoneException e) {
-//      view.displayError(e.getMessage());
-//    }
-//
-//  }
+  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit) {
 
-  // controller/CommandExecutor.java
-
-  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit)
-      throws DuplicateCalendarException, InvalidTimezoneException { // <--- ADDED THROWS
-
-    String newProperty = null;
     try {
       String calName = cmd.getCalendarName();
-      newProperty = cmd.getNewPropertyValue();
+      String newProperty = cmd.getNewPropertyValue();
 
       if (isNameEdit) {
         model.renameCalendar(calName, newProperty);
@@ -173,16 +148,10 @@ class CommandExecutor {
         view.displaySuccess(
             "Timezone of calendar:" + calName + " edited to " + newProperty + " successfully");
       }
-    } catch (DuplicateCalendarException e) {
-      // CRITICAL: We MUST rethrow the exception here instead of just displaying the message.
-      // The Controller needs to know the execution FAILED.
-      view.displayError(
-          "Error renaming calendar: Calendar with name '" + newProperty + "' already exists.");
-      throw e; // <--- RETHROW THE EXCEPTION!
-    } catch (InvalidTimezoneException e) {
+    } catch (DuplicateCalendarException | InvalidTimezoneException e) {
       view.displayError(e.getMessage());
-      throw e; // <--- RETHROW THE EXCEPTION!
     }
+
   }
 
 

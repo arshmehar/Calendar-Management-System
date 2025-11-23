@@ -14,9 +14,9 @@ import java.util.List;
  * expected by the CommandExecutor.
  */
 public class GuiViewAdapter implements IcalendarView {
-  private final CalendarGuiView gui;
+  private final IcalendarGuiView gui;
 
-  public GuiViewAdapter(CalendarGuiView gui) {
+  public GuiViewAdapter(IcalendarGuiView gui) {
     this.gui = gui;
   }
 

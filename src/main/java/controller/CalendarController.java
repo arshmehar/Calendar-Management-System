@@ -17,6 +17,7 @@ import view.gui.CalendarGuiView;
 
 import javax.swing.SwingUtilities;
 import view.gui.GuiViewAdapter;
+import view.gui.IcalendarGuiView;
 
 /**
  * Unified Controller that handles both Text-based (Headless/Interactive)
@@ -26,7 +27,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   private final IcalendarSystem model;
   private IcalendarView view;        // The generic interface used by Executor (and for text output)
-  private CalendarGuiView guiView;   // The specific GUI implementation (only for GUI mode)
+  private IcalendarGuiView guiView;   // The specific GUI implementation (only for GUI mode)
 
   private Icalendar currentCalendar;
   private final CommandParser commandParser;
@@ -40,12 +41,32 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   // ==================== MODE MANAGEMENT ====================
 
+//  @Override
+//  public void run(ApplicationMode mode, String commandFilePath) {
+//    if (mode == ApplicationMode.GUI) {
+//      startGuiMode();
+//    } else {
+//      startTextMode(mode, commandFilePath);
+//    }
+//  }
+
   @Override
   public void run(ApplicationMode mode, String commandFilePath) {
-    if (mode == ApplicationMode.GUI) {
+
+    this.view = new CalendarView();
+
+    if(mode == ApplicationMode.GUI) {
       startGuiMode();
-    } else {
-      startTextMode(mode, commandFilePath);
+    }
+
+    this.commandExecutor = new CommandExecutor(model, view);
+    ModeManager modeManager = new ModeManager(commandFilePath);
+
+    try {
+      modeManager.execute(mode, this);
+
+    } catch (IOException e) {
+      view.displayError(e.getMessage());
     }
   }
 
@@ -56,30 +77,18 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
     // 2. Wrap GUI in Adapter so generic Executor works
     this.view = new GuiViewAdapter(this.guiView);
-    this.commandExecutor = new CommandExecutor(model, view);
+//    this.commandExecutor = new CommandExecutor(model, view);
 
     // 3. Initialize default state
     createDefaultCalendar();
     updateCalendarList();
-    if (currentCalendar != null) {
-      guiView.updateTimezoneDisplay(currentCalendar.getCalendarTimeZone().getId());
-    }
+//    if (currentCalendar != null) {
+//      guiView.updateTimezoneDisplay(currentCalendar.getCalendarTimeZone().getId());
+//    }
 
-    // 4. Launch
     SwingUtilities.invokeLater(guiView::display);
   }
 
-  private void startTextMode(ApplicationMode mode, String commandFilePath) {
-    this.view = new CalendarView();
-    this.commandExecutor = new CommandExecutor(model, view);
-
-    ModeManager modeManager = new ModeManager(commandFilePath);
-    try {
-      modeManager.execute(mode, this);
-    } catch (IOException e) {
-      view.displayError(e.getMessage());
-    }
-  }
 
   // ==================== TEXT INPUT IMPLEMENTATION ====================
 
@@ -90,17 +99,14 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       if (cmd.getCommandType() == CommandType.SET_CONTEXT) {
         this.currentCalendar = commandExecutor.handleContextSetting(cmd);
-        // Only display text message if not in GUI mode
-        if (guiView == null) {
-          view.displayMessage("Context set successfully to calendar: " + this.currentCalendar.getCalendarName());
-        }
+        view.displayMessage("Context set successfully to calendar: " + this.currentCalendar.getCalendarName());
+
       } else {
         commandExecutor.executeCommand(cmd, currentCalendar);
       }
 
     } catch (Exception e) {
-      if (view != null) view.displayError(e.getMessage());
-      else System.err.println("Error: " + e.getMessage());
+       view.displayError(e.getMessage());
     }
   }
 
@@ -118,7 +124,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
   // Note: These methods preserve the specific try-catch blocks and logic
   // from your original CalendarGuiController.
 
-  private void createDefaultCalendar() {
+  protected void createDefaultCalendar() {
     try {
       ZoneId systemZone = ZoneId.systemDefault();
       model.createCalendar("Default", systemZone.getId());
@@ -218,8 +224,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SINGLE_EVENT)
           .subject(subject)
           .startDateTime(start)
@@ -228,10 +232,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(start.toLocalDate());
-      guiView.showSuccess("Event created successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to create event: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -241,7 +242,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new  ParsedCommand.Builder(CommandType.CREATE_ALL_DAY_EVENT)
           .subject(subject)
           .startDateTime(date.atTime(8, 0))
@@ -250,10 +250,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(date);
-      guiView.showSuccess("All-day event created successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to create all-day event: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -266,7 +263,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
           .subject(subject)
           .startDateTime(start)
@@ -277,10 +273,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       commandExecutor.executeCommand(cmd, currentCalendar);
       viewEventsOnDate(start.toLocalDate());
-      guiView.showSuccess("Recurring event created successfully");
-    } catch (Exception e) {
-      guiView.showError("Failed to create recurring event: " + e.getMessage());
-    }
+
   }
 
   @Override
@@ -470,7 +463,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     }
   }
 
-  private void updateCalendarList() {
+  void updateCalendarList() {
     if (guiView != null) {
       List<String> calendarNames = model.getAllCalendarNames();
       guiView.setCalendarNames(calendarNames);

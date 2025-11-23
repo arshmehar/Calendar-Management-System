@@ -16,7 +16,7 @@ import model.Event;
  * Simple GUI view - only displays and notifies listeners.
  * Does NOT call controller or model directly.
  */
-public class CalendarGuiView {
+public class CalendarGuiView implements IcalendarGuiView{
   private final JFrame frame;
   private CalendarFeatures features;
 
