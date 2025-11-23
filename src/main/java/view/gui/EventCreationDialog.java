@@ -1,9 +1,10 @@
-// view/gui/EventCreationDialog.java
 package view.gui;
 
 import controller.DayOfWeekAlphabet;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -11,9 +12,27 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerNumberModel;
 
 /**
  * Dialog for creating single or recurring events.
+ * This modal dialog collects all necessary input fields for event definition,
+ * including subject, time, and recurrence options.
  */
 public class EventCreationDialog extends JDialog {
   private final LocalDate selectedDate;
@@ -34,6 +53,13 @@ public class EventCreationDialog extends JDialog {
   private JSpinner occurrencesSpinner;
   private JSpinner untilDateSpinner;
 
+  /**
+   * Constructs an EventCreationDialog.
+   *
+   * @param parent The parent frame for the dialog.
+   * @param date The date initially selected in the calendar grid.
+   * @param showRecurringOptions True to show recurrence options, false for a single event.
+   */
   public EventCreationDialog(JFrame parent, LocalDate date, boolean showRecurringOptions) {
     super(parent, showRecurringOptions ? "Create Recurring Event" : "Create Event", true);
     this.selectedDate = date;
@@ -46,6 +72,9 @@ public class EventCreationDialog extends JDialog {
     initComponents();
   }
 
+  /**
+   * Initializes and lays out all components of the dialog.
+   */
   private void initComponents() {
     JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -65,6 +94,11 @@ public class EventCreationDialog extends JDialog {
   }
 
 
+  /**
+   * Creates the panel containing basic event fields: subject, start time, and end time.
+   *
+   * @return A JPanel containing the basic event input fields.
+   */
   private JPanel createBasicFieldsPanel() {
     JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
 
@@ -96,6 +130,12 @@ public class EventCreationDialog extends JDialog {
     return panel;
   }
 
+  /**
+   * Creates the panel containing recurrence options (weekdays and end conditions).
+   * This panel is only visible if the dialog is in recurring mode.
+   *
+   * @return A JPanel containing recurrence input fields.
+   */
   private JPanel createRecurringPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -105,7 +145,6 @@ public class EventCreationDialog extends JDialog {
     JPanel daysPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     daysPanel.add(new JLabel("Repeat on:"));
 
-    String[] dayLabels = {"M", "T", "W", "R", "F", "S", "U"};
     String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
     weekdayCheckboxes = new JCheckBox[7];
 
@@ -125,10 +164,11 @@ public class EventCreationDialog extends JDialog {
     ButtonGroup group = new ButtonGroup();
 
     // Occurrences option
-    JPanel occPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     occurrencesRadio = new JRadioButton("After");
     occurrencesRadio.setSelected(true);
     group.add(occurrencesRadio);
+
+    JPanel occPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     occPanel.add(occurrencesRadio);
 
     occurrencesSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
@@ -160,8 +200,12 @@ public class EventCreationDialog extends JDialog {
     return panel;
   }
 
+  /**
+   * Creates the panel containing the Create and Cancel buttons.
+   *
+   * @return A JPanel containing the action buttons.
+   */
   private JPanel createButtonPanel() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
 
     JButton createButton = new JButton("Create");
     createButton.setPreferredSize(new Dimension(100, 30));
@@ -171,12 +215,17 @@ public class EventCreationDialog extends JDialog {
     cancelButton.setPreferredSize(new Dimension(100, 30));
     cancelButton.addActionListener(e -> onCancelClicked());
 
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
     panel.add(createButton);
     panel.add(cancelButton);
 
     return panel;
   }
 
+  /**
+   * Handles the action when the Create button is clicked.
+   * Validates input and closes the dialog upon success.
+   */
   private void onCreateClicked() {
     if (validation()) {
       confirmed = true;
@@ -184,11 +233,21 @@ public class EventCreationDialog extends JDialog {
     }
   }
 
+  /**
+   * Handles the action when the Cancel button is clicked or the dialog is closed.
+   */
   private void onCancelClicked() {
     confirmed = false;
     dispose();
   }
 
+  /**
+   * Performs validation checks on all required fields.
+   * Checks for empty subject, valid time range (end after start), and
+   * at least one weekday selected for recurring events.
+   *
+   * @return true if all input is valid, false otherwise (displays JOptionPane error).
+   */
   private boolean validation() {
     // Validate subject
     if (subjectField.getText().trim().isEmpty()) {
@@ -242,26 +301,51 @@ public class EventCreationDialog extends JDialog {
 
   // Getters
 
+  /**
+   * Checks if the user confirmed the action by clicking the Create button.
+   *
+   * @return true if confirmed, false otherwise.
+   */
   public boolean isConfirmed() {
     return confirmed;
   }
 
+  /**
+   * Gets the subject/name of the event entered by the user.
+   *
+   * @return The trimmed subject string.
+   */
   public String getSubject() {
     return subjectField.getText().trim();
   }
 
+  /**
+   * Combines the selected date with the entered start time components.
+   *
+   * @return The full start date and time as a LocalDateTime object.
+   */
   public LocalDateTime getStartDateTime() {
     int hour = (int) startHourSpinner.getValue();
     int minute = (int) startMinuteSpinner.getValue();
     return LocalDateTime.of(selectedDate, LocalTime.of(hour, minute));
   }
 
+  /**
+   * Combines the selected date with the entered end time components.
+   *
+   * @return The full end date and time as a LocalDateTime object.
+   */
   public LocalDateTime getEndDateTime() {
     int hour = (int) endHourSpinner.getValue();
     int minute = (int) endMinuteSpinner.getValue();
     return LocalDateTime.of(selectedDate, LocalTime.of(hour, minute));
   }
 
+  /**
+   * Gets the set of weekdays selected for a recurring event.
+   *
+   * @return A Set of DayOfWeekAlphabet enums.
+   */
   public Set<DayOfWeekAlphabet> getSelectedWeekdays() {
     Set<DayOfWeekAlphabet> weekdays = new HashSet<>();
     DayOfWeekAlphabet[] dayValues = {
@@ -283,14 +367,29 @@ public class EventCreationDialog extends JDialog {
     return weekdays;
   }
 
+  /**
+   * Checks if the recurrence end condition is based on a number of occurrences.
+   *
+   * @return true if 'After (N occurrences)' is selected, false if 'Until (date)' is selected.
+   */
   public boolean isOccurrencesBased() {
     return occurrencesRadio != null && occurrencesRadio.isSelected();
   }
 
+  /**
+   * Gets the number of occurrences specified for the recurrence end condition.
+   *
+   * @return The integer number of occurrences.
+   */
   public int getOccurrences() {
     return (Integer) occurrencesSpinner.getValue();
   }
 
+  /**
+   * Gets the end date specified for the recurrence end condition (for Until mode).
+   *
+   * @return The end date as a LocalDate object.
+   */
   public LocalDate getUntilDate() {
     Date date = (Date) untilDateSpinner.getValue();
     Calendar cal = Calendar.getInstance();

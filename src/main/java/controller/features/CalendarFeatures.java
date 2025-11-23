@@ -1,4 +1,5 @@
 package controller.features;
+
 import controller.DayOfWeekAlphabet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -104,11 +105,12 @@ public interface CalendarFeatures {
   /**
    * Export calendar to CSV.
    */
-  void exportToCSV(String filePath);
+  void exportToCsv(String filePath);
 
   /**
    * Export calendar to iCal format.
    */
-  void exportToICal(String filePath);
+  void exportToIcal(String filePath);
+
 
 }

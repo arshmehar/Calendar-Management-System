@@ -20,7 +20,6 @@ import view.IcalendarView;
 
 class CommandExecutor {
 
-  private Icalendar currentCalendar;
   private final IcalendarSystem model;
   private final IcalendarView view;
   private final Map<CommandType, Consumer<ParsedCommand>> commandHandlers;
@@ -33,7 +32,7 @@ class CommandExecutor {
   }
 
   protected void executeCommand(ParsedCommand cmd, Icalendar currentCalendar)
-      throws IllegalStateException {
+      throws IllegalStateException, DuplicateCalendarException, InvalidTimezoneException {
     CommandType type = cmd.getCommandType();
     this.currentCalendar = currentCalendar;
 
@@ -70,11 +69,13 @@ class CommandExecutor {
 
   }
 
-  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit) {
+  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit)
+      throws DuplicateCalendarException, InvalidTimezoneException { // <--- ADD THROWS
 
+    String newProperty = null;
     try {
       String calName = cmd.getCalendarName();
-      String newProperty = cmd.getNewPropertyValue();
+      newProperty = cmd.getNewPropertyValue(); // Variable set inside try block
 
       if (isNameEdit) {
         model.renameCalendar(calName, newProperty);
@@ -85,10 +86,15 @@ class CommandExecutor {
         view.displaySuccess(
             "Timezone of calendar:" + calName + " edited to " + newProperty + " successfully");
       }
-    } catch (DuplicateCalendarException | InvalidTimezoneException e) {
+    } catch (DuplicateCalendarException e) {
+      // Catch, display GUI error via console adapter, and RETHROW to halt controller flow
+      view.displayError(
+          "Error renaming calendar: Calendar with name '" + newProperty + "' already exists.");
+      throw e;
+    } catch (InvalidTimezoneException e) {
       view.displayError(e.getMessage());
+      throw e;
     }
-
   }
 
 

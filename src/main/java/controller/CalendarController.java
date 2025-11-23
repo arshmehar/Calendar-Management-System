@@ -7,32 +7,35 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-
-import model.DuplicateCalendarException;
+import javax.swing.SwingUtilities;
 import model.Icalendar;
 import model.IcalendarSystem;
 import view.CalendarView;
 import view.IcalendarView;
 import view.gui.CalendarGuiView;
-
-import javax.swing.SwingUtilities;
 import view.gui.GuiViewAdapter;
 import view.gui.IcalendarGuiView;
 
 /**
  * Unified Controller that handles both Text-based (Headless/Interactive)
  * and GUI-based interactions.
+ * This class implements both the generic IcalendarController lifecycle and
+ * the specific CalendarFeatures interface for GUI interactions.
  */
 public class CalendarController implements IcalendarController, CalendarFeatures {
 
   private final IcalendarSystem model;
+  private final CommandParser commandParser;
   private IcalendarView view;        // The generic interface used by Executor (and for text output)
   private IcalendarGuiView guiView;   // The specific GUI implementation (only for GUI mode)
-
   private Icalendar currentCalendar;
-  private final CommandParser commandParser;
   private CommandExecutor commandExecutor;
 
+  /**
+   * Constructs the CalendarController.
+   *
+   * @param model The application's data model (IcalendarSystem).
+   */
   public CalendarController(IcalendarSystem model) {
     this.model = model;
     this.currentCalendar = null;
@@ -41,21 +44,11 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   // ==================== MODE MANAGEMENT ====================
 
-//  @Override
-//  public void run(ApplicationMode mode, String commandFilePath) {
-//    if (mode == ApplicationMode.GUI) {
-//      startGuiMode();
-//    } else {
-//      startTextMode(mode, commandFilePath);
-//    }
-//  }
-
   @Override
   public void run(ApplicationMode mode, String commandFilePath) {
-
     this.view = new CalendarView();
 
-    if(mode == ApplicationMode.GUI) {
+    if (mode == ApplicationMode.GUI) {
       startGuiMode();
     }
 
@@ -70,6 +63,9 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     }
   }
 
+  /**
+   * Initializes components specific to the GUI mode and starts the Swing thread.
+   */
   private void startGuiMode() {
     // 1. Initialize GUI specific components
     this.guiView = new CalendarGuiView();
@@ -77,14 +73,10 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
     // 2. Wrap GUI in Adapter so generic Executor works
     this.view = new GuiViewAdapter(this.guiView);
-//    this.commandExecutor = new CommandExecutor(model, view);
 
     // 3. Initialize default state
     createDefaultCalendar();
     updateCalendarList();
-//    if (currentCalendar != null) {
-//      guiView.updateTimezoneDisplay(currentCalendar.getCalendarTimeZone().getId());
-//    }
 
     SwingUtilities.invokeLater(guiView::display);
   }
@@ -99,14 +91,15 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
       if (cmd.getCommandType() == CommandType.SET_CONTEXT) {
         this.currentCalendar = commandExecutor.handleContextSetting(cmd);
-        view.displayMessage("Context set successfully to calendar: " + this.currentCalendar.getCalendarName());
+        view.displayMessage(
+            "Context set successfully to calendar: " + this.currentCalendar.getCalendarName());
 
       } else {
         commandExecutor.executeCommand(cmd, currentCalendar);
       }
 
     } catch (Exception e) {
-       view.displayError(e.getMessage());
+      view.displayError(e.getMessage());
     }
   }
 
@@ -122,6 +115,9 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   // ==================== GUI FEATURES IMPLEMENTATION ====================
 
+  /**
+   * Creates a default calendar if none exists and sets it as the current context.
+   */
   protected void createDefaultCalendar() {
     try {
       ZoneId systemZone = ZoneId.systemDefault();
@@ -134,14 +130,13 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   @Override
   public void createCalendar(String name, String timezone) {
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_CALENDAR)
-          .calendarName(name)
-          .calendarTimeZone(timezone)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_CALENDAR)
+        .calendarName(name)
+        .calendarTimeZone(timezone)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      updateCalendarList();
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    updateCalendarList();
   }
 
   @Override
@@ -166,18 +161,29 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
+    try {
       ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_NAME)
           .calendarName(calendarName)
           .propertyToEdit("name")
           .newPropertyValue(newName)
           .build();
 
+      // Execution happens, throws exception on duplicate
       commandExecutor.executeCommand(cmd, currentCalendar);
 
+      // --- SUCCESS PATH (Only runs if execution succeeded) ---
       updateCalendarList();
-//      currentCalendar = model.getCalendar(newName);
+      currentCalendar = model.getCalendar(newName);
 
+    } catch (model.DuplicateCalendarException e) {
+      // Catch specific exception and show GUI error
+      guiView.showError(
+          "Calendar renaming failed: A calendar named '" + newName + "' already exists.");
 
+    } catch (Exception e) {
+      // Catch other errors (CalendarNotFoundException, etc.)
+      guiView.showError("Failed to rename calendar: " + e.getMessage());
+    }
   }
 
   @Override
@@ -187,36 +193,30 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_ZONE)
-          .calendarName(calendarName)
-          .propertyToEdit("timezone")
-          .newPropertyValue(newTimezone)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_CALENDAR_ZONE)
+        .calendarName(calendarName)
+        .propertyToEdit("timezone")
+        .newPropertyValue(newTimezone)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
+    commandExecutor.executeCommand(cmd, currentCalendar);
 
-      guiView.updateTimezoneDisplay(newTimezone);
-      LocalDate dateToRefresh = guiView.getSelectedDate();
-      viewEventsOnDate(dateToRefresh);
-
-
+    guiView.updateTimezoneDisplay(newTimezone);
+    LocalDate dateToRefresh = guiView.getSelectedDate();
+    viewEventsOnDate(dateToRefresh);
   }
 
   @Override
   public void createSingleEvent(String subject, LocalDateTime start, LocalDateTime end) {
-    if (currentCalendar == null) {
-      guiView.showError("No calendar selected");
-      return;
-    }
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SINGLE_EVENT)
-          .subject(subject)
-          .startDateTime(start)
-          .endDateTime(end)
-          .build();
+    // The command executor handles the null currentCalendar check via IllegalStateException
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SINGLE_EVENT)
+        .subject(subject)
+        .startDateTime(start)
+        .endDateTime(end)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(start.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(start.toLocalDate());
   }
 
   @Override
@@ -226,15 +226,14 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-      ParsedCommand cmd = new  ParsedCommand.Builder(CommandType.CREATE_ALL_DAY_EVENT)
-          .subject(subject)
-          .startDateTime(date.atTime(8, 0))
-          .endDateTime(date.atTime(17, 0))
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_ALL_DAY_EVENT)
+        .subject(subject)
+        .startDateTime(date.atTime(8, 0))
+        .endDateTime(date.atTime(17, 0))
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(date);
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(date);
   }
 
   @Override
@@ -247,17 +246,16 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
-          .subject(subject)
-          .startDateTime(start)
-          .endDateTime(end)
-          .weekdays(weekdays)
-          .occurrences(occurrences)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
+        .subject(subject)
+        .startDateTime(start)
+        .endDateTime(end)
+        .weekdays(weekdays)
+        .occurrences(occurrences)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(start.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(start.toLocalDate());
   }
 
   @Override
@@ -270,17 +268,16 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
-          .subject(subject)
-          .startDateTime(start)
-          .endDateTime(end)
-          .weekdays(weekdays)
-          .seriesEndDate(endDate)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
+        .subject(subject)
+        .startDateTime(start)
+        .endDateTime(end)
+        .weekdays(weekdays)
+        .seriesEndDate(endDate)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(start.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(start.toLocalDate());
   }
 
   @Override
@@ -291,17 +288,16 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
-          .subject(subject)
-          .startDateTime(start)
-          .endDateTime(end)
-          .propertyToEdit(property)
-          .newPropertyValue(newValue)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
+        .subject(subject)
+        .startDateTime(start)
+        .endDateTime(end)
+        .propertyToEdit(property)
+        .newPropertyValue(newValue)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(start.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(start.toLocalDate());
   }
 
   @Override
@@ -311,16 +307,15 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
-          .subject(subject)
-          .startDateTime(startDateTime)
-          .propertyToEdit(property)
-          .newPropertyValue(newValue)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
+        .subject(subject)
+        .startDateTime(startDateTime)
+        .propertyToEdit(property)
+        .newPropertyValue(newValue)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(startDateTime.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(startDateTime.toLocalDate());
   }
 
   @Override
@@ -330,38 +325,40 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
-          .subject(subject)
-          .startDateTime(anyEventStart)
-          .propertyToEdit(property)
-          .newPropertyValue(newValue)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
+        .subject(subject)
+        .startDateTime(anyEventStart)
+        .propertyToEdit(property)
+        .newPropertyValue(newValue)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-      viewEventsOnDate(anyEventStart.toLocalDate());
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
+    viewEventsOnDate(anyEventStart.toLocalDate());
   }
 
   @Override
   public void viewEventsOnDate(LocalDate date) {
     if (currentCalendar == null) {
-      if (guiView != null) guiView.displayEvents(null, date);
+      if (guiView != null) {
+        guiView.displayEvents(null, date);
+      }
       return;
     }
 
     List<model.Event> events = currentCalendar.getEventsOn(date);
-    if (guiView != null) guiView.displayEvents(events, date);
+    if (guiView != null) {
+      guiView.displayEvents(events, date);
+    }
   }
 
   @Override
   public void viewEventsFromDate(LocalDateTime startDateTime) {
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.PRINT_EVENTS_FROM)
-          .startDateTime(startDateTime)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.PRINT_EVENTS_FROM)
+        .startDateTime(startDateTime)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
   }
 
   @Override
@@ -370,43 +367,44 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.SHOW_STATUS)
-          .startDateTime(dateTime)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.SHOW_STATUS)
+        .startDateTime(dateTime)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
-
-
+    commandExecutor.executeCommand(cmd, currentCalendar);
   }
 
   @Override
-  public void exportToCSV(String filePath) {
+  public void exportToCsv(String filePath) {
     if (currentCalendar == null) {
       guiView.showError("No calendar selected");
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_CSV)
-          .fileName(filePath)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_CSV)
+        .fileName(filePath)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
+    commandExecutor.executeCommand(cmd, currentCalendar);
   }
 
   @Override
-  public void exportToICal(String filePath) {
+  public void exportToIcal(String filePath) {
     if (currentCalendar == null) {
       guiView.showError("No calendar selected");
       return;
     }
 
-      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_ICAL)
-          .fileName(filePath)
-          .build();
+    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EXPORT_CALENDAR_ICAL)
+        .fileName(filePath)
+        .build();
 
-      commandExecutor.executeCommand(cmd, currentCalendar);
+    commandExecutor.executeCommand(cmd, currentCalendar);
   }
 
+  /**
+   * Updates the list of available calendar names in the GUI's dropdown selector.
+   */
   void updateCalendarList() {
     if (guiView != null) {
       List<String> calendarNames = model.getAllCalendarNames();

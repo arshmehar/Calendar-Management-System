@@ -355,7 +355,9 @@ public class CalendarSystem implements IcalendarSystem {
   }
 
   /**
-   * @return
+   * Retrieves a list of all calendar names managed by the system.
+   *
+   * @return a list of all available calendar names.
    */
   @Override
   public List<String> getAllCalendarNames() {

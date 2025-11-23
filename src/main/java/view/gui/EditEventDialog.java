@@ -1,21 +1,40 @@
 package view.gui;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.time.LocalDate;
-import model.Event;
-
-import javax.swing.*;
-import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import model.Event;
 
 /**
  * Dialog for editing event properties with dynamic input fields.
  * Switches between Text, Date/Time, and Dropdown inputs based on selection.
  */
 public class EditEventDialog extends JDialog {
+  // Card Identifiers
+  private static final String CARD_TEXT = "TEXT";
+  private static final String CARD_DATETIME = "DATETIME";
+  private static final String CARD_STATUS = "STATUS";
+
   private final Event event;
   private final String editScope;
   private boolean confirmed = false;
@@ -31,11 +50,14 @@ public class EditEventDialog extends JDialog {
   private JSpinner timeSpinner;
   private JComboBox<String> statusCombo;
 
-  // Card Identifiers
-  private static final String CARD_TEXT = "TEXT";
-  private static final String CARD_DATETIME = "DATETIME";
-  private static final String CARD_STATUS = "STATUS";
-
+  /**
+   * Constructs an EditEventDialog.
+   *
+   * @param parent The parent JFrame for the dialog.
+   * @param event The event object being edited.
+   * @param displayDate The date currently displayed in the calendar (for context).
+   * @param editScope The scope of the edit ("single", "fromDate", or "all").
+   */
   public EditEventDialog(JFrame parent, Event event, LocalDate displayDate, String editScope) {
     super(parent, "Edit Event", true);
     this.event = event;
@@ -48,6 +70,9 @@ public class EditEventDialog extends JDialog {
     initComponents();
   }
 
+  /**
+   * Initializes and lays out all components of the dialog.
+   */
   private void initComponents() {
     JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -70,21 +95,19 @@ public class EditEventDialog extends JDialog {
     infoLabel.setFont(new Font("Arial", Font.BOLD, 12));
     mainPanel.add(infoLabel, BorderLayout.NORTH);
 
-    // 2. Input Panel Container
-    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+
 
     // Property Selector
     JPanel propPanel = new JPanel(new BorderLayout(10, 10));
     propPanel.add(new JLabel("Property to edit:"), BorderLayout.WEST);
 
-    // Note: Keys must match what the controller expects ("subject" -> "name") or be mapped later
-    // For simplicity here, we use display names and map them in getters if needed,
-    // or use the lowercase names the controller likely uses.
     String[] properties = {"subject", "description", "location", "start", "end", "status"};
     propertyCombo = new JComboBox<>(properties);
     propertyCombo.addActionListener(e -> updateInputView());
     propPanel.add(propertyCombo, BorderLayout.CENTER);
 
+    // 2. Input Panel Container
+    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 5));
     centerPanel.add(propPanel);
 
     // Dynamic Input Area (CardLayout)
@@ -97,8 +120,7 @@ public class EditEventDialog extends JDialog {
     textPanel.add(textField, BorderLayout.CENTER);
     inputContainer.add(textPanel, CARD_TEXT);
 
-    // --- Card 2: Date/Time Input ---
-    JPanel dateTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
 
     dateSpinner = new JSpinner(new SpinnerDateModel());
     dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
@@ -106,6 +128,7 @@ public class EditEventDialog extends JDialog {
     timeSpinner = new JSpinner(new SpinnerDateModel());
     timeSpinner.setEditor(new JSpinner.DateEditor(timeSpinner, "HH:mm"));
 
+    JPanel dateTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     dateTimePanel.add(new JLabel("Date:"));
     dateTimePanel.add(dateSpinner);
     dateTimePanel.add(Box.createHorizontalStrut(10));
@@ -116,7 +139,7 @@ public class EditEventDialog extends JDialog {
 
     // --- Card 3: Status Input ---
     JPanel statusPanel = new JPanel(new BorderLayout());
-    statusCombo = new JComboBox<>(new String[]{"PUBLIC", "PRIVATE"});
+    statusCombo = new JComboBox<>(new String[] {"PUBLIC", "PRIVATE"});
     statusPanel.add(statusCombo, BorderLayout.CENTER);
     inputContainer.add(statusPanel, CARD_STATUS);
 
@@ -154,7 +177,9 @@ public class EditEventDialog extends JDialog {
    */
   private void updateInputView() {
     String selected = (String) propertyCombo.getSelectedItem();
-    if (selected == null) return;
+    if (selected == null) {
+      return;
+    }
 
     switch (selected) {
       case "start":
@@ -167,16 +192,21 @@ public class EditEventDialog extends JDialog {
         break;
 
       case "status":
-        String currentStatus = (event.getStatus() != null) ? event.getStatus().toString().toUpperCase() : "PUBLIC";
+        String currentStatus =
+            (event.getStatus() != null) ? event.getStatus().toString().toUpperCase() : "PUBLIC";
         statusCombo.setSelectedItem(currentStatus);
         cardLayout.show(inputContainer, CARD_STATUS);
         break;
 
       default: // name, location, description
         String textVal = "";
-        if (selected.equals("subject")) textVal = event.getSubject();
-        else if (selected.equals("location")) textVal = event.getLocation();
-        else if (selected.equals("description")) textVal = event.getDescription();
+        if (selected.equals("subject")) {
+          textVal = event.getSubject();
+        } else if (selected.equals("location")) {
+          textVal = event.getLocation();
+        } else if (selected.equals("description")) {
+          textVal = event.getDescription();
+        }
 
         textField.setText(textVal != null ? textVal : "");
         cardLayout.show(inputContainer, CARD_TEXT);
@@ -184,36 +214,56 @@ public class EditEventDialog extends JDialog {
     }
   }
 
+  /**
+   * Performs basic validation based on the active input type.
+   * Currently checks if the subject/name field is empty.
+   *
+   * @return true if validation passes, false otherwise (displays JOptionPane error).
+   */
   private boolean validation() {
     String prop = (String) propertyCombo.getSelectedItem();
 
     // Basic empty check for text fields
     if (inputContainer.getComponent(0).isVisible() && textField.getText().trim().isEmpty()) {
-      // Allow empty description/location, but maybe not name?
-      if (Objects.equals(prop, "name")) {
-        JOptionPane.showMessageDialog(this, "Event name cannot be empty.");
+      // Check if the property being edited is subject/name
+      if (Objects.equals(prop, "name") || Objects.equals(prop, "subject")) {
+        JOptionPane.showMessageDialog(this, "Event name/subject cannot be empty.");
         return false;
       }
     }
 
-    // Date validation could go here (e.g. start < end),
-    // but might be complex if we are only editing one property at a time.
-    // We leave logic validation to the controller/model.
-
     return true;
   }
 
+  /**
+   * Checks if the dialog was confirmed by the user (Save clicked).
+   *
+   * @return true if confirmed, false if canceled or closed.
+   */
   public boolean isConfirmed() {
     return confirmed;
   }
 
+  /**
+   * Gets the name of the property selected for editing.
+   *
+   * @return The property name string.
+   */
   public String getProperty() {
     return (String) propertyCombo.getSelectedItem();
   }
 
+  /**
+   * Gets the new value entered/selected by the user.
+   * The format is adjusted based on the property type (ISO string for datetime, or text/status).
+   *
+   * @return The new property value as a String.
+   */
   public String getNewValue() {
     String prop = (String) propertyCombo.getSelectedItem();
-    if (prop == null) return "";
+    if (prop == null) {
+      return "";
+    }
 
     switch (prop) {
       case "start":

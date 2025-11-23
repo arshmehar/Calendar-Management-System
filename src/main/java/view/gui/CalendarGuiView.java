@@ -1,22 +1,38 @@
-// view/gui/CalendarGuiView.java
 package view.gui;
 
 import controller.features.CalendarFeatures;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import model.Event;
 
 /**
  * Simple GUI view - only displays and notifies listeners.
  * Does NOT call controller or model directly.
+ * This class implements the IcalendarGuiView contract for the Swing interface.
  */
-public class CalendarGuiView implements IcalendarGuiView{
+public class CalendarGuiView implements IcalendarGuiView {
   private final JFrame frame;
   private CalendarFeatures features;
 
@@ -31,6 +47,10 @@ public class CalendarGuiView implements IcalendarGuiView{
   private LocalDate selectedDate;
   private JPanel eventContainer;
 
+  /**
+   * Constructs the CalendarGuiView and initializes the main application frame
+   * with the current month and date.
+   */
   public CalendarGuiView() {
     this.currentMonth = YearMonth.now();
     this.selectedDate = LocalDate.now();
@@ -40,21 +60,28 @@ public class CalendarGuiView implements IcalendarGuiView{
     frame.setSize(900, 700);
     frame.setLocationRelativeTo(null);
 
-    setupUI();
+    setupUi();
   }
 
+  /**
+   * Sets the feature listener (controller) for this view.
+   *
+   * @param features the controller implementation of CalendarFeatures.
+   */
   public void setFeatures(CalendarFeatures features) {
     this.features = features;
   }
 
-  private void setupUI() {
+  /**
+   * Sets up the main UI layout, including the top panel, calendar grid, and right panel.
+   */
+  private void setupUi() {
     frame.setLayout(new BorderLayout(10, 10));
 
     // Top panel
     frame.add(createTopPanel(), BorderLayout.NORTH);
 
     // Center - calendar grid
-    // Use 0 rows to allow dynamic addition, fixed 7 columns
     calendarGrid = new JPanel(new GridLayout(0, 7, 5, 5));
     calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     frame.add(calendarGrid, BorderLayout.CENTER);
@@ -66,8 +93,12 @@ public class CalendarGuiView implements IcalendarGuiView{
     buildCalendar();
   }
 
+  /**
+   * Creates the top panel containing calendar selection, navigation, and timezone display.
+   *
+   * @return A JPanel representing the top section of the GUI.
+   */
   private JPanel createTopPanel() {
-    JPanel topPanel = new JPanel(new BorderLayout());
 
     // Left - calendar selection and actions
     JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -91,9 +122,10 @@ public class CalendarGuiView implements IcalendarGuiView{
     newCalButton.addActionListener(e -> showCreateCalendarDialog());
     leftPanel.add(newCalButton);
 
+    JPanel topPanel = new JPanel(new BorderLayout());
+
     topPanel.add(leftPanel, BorderLayout.WEST);
 
-    // ... rest of createTopPanel remains the same ...
     // Center - navigation
     JPanel navPanel = new JPanel(new FlowLayout());
 
@@ -115,7 +147,6 @@ public class CalendarGuiView implements IcalendarGuiView{
 
     topPanel.add(navPanel, BorderLayout.CENTER);
 
-    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
 
     // ----------------------------------------------------------------
     // CHANGE: Initialize with an empty string, as the controller
@@ -126,6 +157,8 @@ public class CalendarGuiView implements IcalendarGuiView{
     timezoneLabel.setFont(new Font("Arial", Font.ITALIC, 11));
     timezoneLabel.setForeground(Color.GRAY);
 
+    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+
     bottomPanel.add(timezoneLabel);
     bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
@@ -134,6 +167,11 @@ public class CalendarGuiView implements IcalendarGuiView{
     return topPanel;
   }
 
+  /**
+   * Creates the right panel containing the event list display and action buttons.
+   *
+   * @return A JPanel representing the right section of the GUI.
+   */
   private JPanel createRightPanel() {
     JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -174,6 +212,9 @@ public class CalendarGuiView implements IcalendarGuiView{
     return rightPanel;
   }
 
+  /**
+   * Renders the calendar grid for the currently displayed month.
+   */
   private void buildCalendar() {
     calendarGrid.removeAll();
 
@@ -226,7 +267,6 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
 
 
-
     // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
     int cellsFilled = startDayOfWeek + daysInMonth;
     int totalCells = 42;
@@ -238,6 +278,11 @@ public class CalendarGuiView implements IcalendarGuiView{
     calendarGrid.repaint();
   }
 
+  /**
+   * Handles user selection of a date on the calendar grid.
+   *
+   * @param date The LocalDate selected by the user.
+   */
   private void selectDate(LocalDate date) {
     selectedDate = date;
     buildCalendar();
@@ -246,12 +291,20 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Handles navigation to the previous or next month.
+   *
+   * @param delta -1 for previous month, +1 for next month.
+   */
   private void changeMonth(int delta) {
     currentMonth = currentMonth.plusMonths(delta);
     updateMonthLabel();
     buildCalendar();
   }
 
+  /**
+   * Handles navigation back to the current system month and day.
+   */
   private void goToToday() {
     currentMonth = YearMonth.now();
     selectedDate = LocalDate.now();
@@ -262,6 +315,9 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Updates the Month/Year label in the navigation bar.
+   */
   private void updateMonthLabel() {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy");
     monthLabel.setText(currentMonth.format(formatter));
@@ -269,11 +325,18 @@ public class CalendarGuiView implements IcalendarGuiView{
 
   // ==================== DIALOG METHODS ====================
 
+  /**
+   * Displays the dialog for creating a new calendar.
+   */
   private void showCreateCalendarDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     String name = JOptionPane.showInputDialog(frame, "Enter calendar name:");
-    if (name == null || name.trim().isEmpty()) return;
+    if (name == null || name.trim().isEmpty()) {
+      return;
+    }
 
     String[] timezones = {"America/New_York", "America/Los_Angeles", "America/Chicago",
         "Europe/London", "Europe/Paris", "Asia/Tokyo", "Asia/Kolkata"};
@@ -286,8 +349,13 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Displays the dialog for creating a single event.
+   */
   private void showCreateEventDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     EventCreationDialog dialog = new EventCreationDialog(frame, selectedDate, false);
     dialog.setVisible(true);
@@ -301,8 +369,13 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Displays the dialog for creating a recurring event series.
+   */
   private void showCreateRecurringDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     EventCreationDialog dialog = new EventCreationDialog(frame, selectedDate, true);
     dialog.setVisible(true);
@@ -328,20 +401,27 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Displays the dialog for editing an existing event.
+   */
   private void showEditEventDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     String eventName = JOptionPane.showInputDialog(frame,
         "Enter event name to edit:");
-    if (eventName == null || eventName.trim().isEmpty()) return;
+    if (eventName == null || eventName.trim().isEmpty()) {
+      return;
+    }
 
     String property = "subject";
     String newValue = JOptionPane.showInputDialog(frame,
         "Enter new subject:");
-    if (newValue == null || newValue.trim().isEmpty()) return;
+    if (newValue == null || newValue.trim().isEmpty()) {
+      return;
+    }
 
-    // For simplicity, just edit single event
-    // You can add radio buttons to choose edit scope
     features.editSingleEvent(
         eventName.trim(),
         selectedDate.atTime(10, 0), // Placeholder
@@ -352,8 +432,13 @@ public class CalendarGuiView implements IcalendarGuiView{
   }
 
 
+  /**
+   * Displays the dialog for exporting the calendar contents.
+   */
   private void showExportDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     String[] options = {"CSV", "iCal"};
     int choice = JOptionPane.showOptionDialog(frame,
@@ -371,9 +456,9 @@ public class CalendarGuiView implements IcalendarGuiView{
         String filePath = fileChooser.getSelectedFile().getAbsolutePath();
 
         if (choice == 0) {
-          features.exportToCSV(filePath);
+          features.exportToCsv(filePath);
         } else {
-          features.exportToICal(filePath);
+          features.exportToIcal(filePath);
         }
       }
     }
@@ -381,6 +466,11 @@ public class CalendarGuiView implements IcalendarGuiView{
 
   // ==================== PUBLIC UPDATE METHODS ====================
 
+  /**
+   * Sets the names of the available calendars in the selector dropdown.
+   *
+   * @param names The list of calendar names.
+   */
   public void setCalendarNames(List<String> names) {
     calendarSelector.removeAllItems();
     for (String name : names) {
@@ -388,10 +478,21 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
+  /**
+   * Sets the currently selected calendar in the dropdown.
+   *
+   * @param name The name of the calendar to select.
+   */
   public void setSelectedCalendar(String name) {
     calendarSelector.setSelectedItem(name);
   }
 
+  /**
+   * Displays the list of events for a specific date in the event panel.
+   *
+   * @param events The list of events to display (can be null or empty).
+   * @param date The date associated with these events.
+   */
   public void displayEvents(List<Event> events, LocalDate date) {
     eventContainer.removeAll();
 
@@ -413,24 +514,47 @@ public class CalendarGuiView implements IcalendarGuiView{
     eventContainer.repaint();
   }
 
+  /**
+   * Displays an error message to the user via a warning modal popup.
+   *
+   * @param message The error description.
+   */
   public void showError(String message) {
     JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
   }
 
+  /**
+   * Displays a success message to the user, typically as an informational modal popup.
+   *
+   * @param message The success message to display.
+   */
   public void showSuccess(String message) {
     JOptionPane.showMessageDialog(frame, message, "Success", JOptionPane.INFORMATION_MESSAGE);
   }
 
+  /**
+   * Makes the main application frame visible to the user.
+   */
   public void display() {
     frame.setVisible(true);
   }
 
+  /**
+   * Gets the main application frame.
+   *
+   * @return the main JFrame.
+   */
   public JFrame getFrame() {
     return frame;
   }
 
+  /**
+   * Displays the dialog for editing the selected calendar's properties (name or timezone).
+   */
   private void showEditCalendarDialog() {
-    if (features == null) return;
+    if (features == null) {
+      return;
+    }
 
     String currentCalendarName = (String) calendarSelector.getSelectedItem();
     if (currentCalendarName == null) {
@@ -454,7 +578,8 @@ public class CalendarGuiView implements IcalendarGuiView{
       String newName = JOptionPane.showInputDialog(frame,
           "Enter the new name for the calendar:", currentCalendarName);
 
-      if (newName != null && !newName.trim().isEmpty() && !newName.trim().equals(currentCalendarName)) {
+      if (newName != null && !newName.trim().isEmpty()
+          && !newName.trim().equals(currentCalendarName)) {
         features.editCalendarName(currentCalendarName, newName.trim());
         // Controller will handle success/error messages and list updates
       }
@@ -471,13 +596,10 @@ public class CalendarGuiView implements IcalendarGuiView{
     }
   }
 
-  // view/gui/CalendarGuiView.java
-
-// ... existing methods ...
-
   /**
    * Getter for the currently selected date in the view.
    * Required for the controller to refresh the event panel based on context.
+   *
    * @return the currently selected date.
    */
   public LocalDate getSelectedDate() {
@@ -486,11 +608,22 @@ public class CalendarGuiView implements IcalendarGuiView{
 
   /**
    * Updates the visible timezone label.
+   *
+   * @param timezoneId the ID of the timezone to display.
    */
   public void updateTimezoneDisplay(String timezoneId) {
     if (timezoneLabel != null) {
       timezoneLabel.setText("Current Timezone: " + timezoneId);
     }
+  }
+
+  /**
+   * Returns the YearMonth object representing the month currently displayed.
+   *
+   * @return the current YearMonth context.
+   */
+  public YearMonth getCurrentDisplayContext() {
+    return currentMonth;
   }
 
 }

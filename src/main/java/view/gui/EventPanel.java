@@ -1,46 +1,84 @@
 // view/gui/EventPanel.java
+
 package view.gui;
 
 import controller.features.CalendarFeatures;
-import model.Event;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import model.Event;
 
 /**
  * Panel representing a single clickable event.
  * Only displays properties that have been set (non-null, non-empty).
+ * This component is used in the right-hand events display area.
  */
 public class EventPanel extends JPanel {
   private final Event event;
   private final LocalDate displayDate;
   private final CalendarFeatures features;
 
+  /**
+   * Constructs an EventPanel.
+   *
+   * @param event The event object to display.
+   * @param displayDate The date context under which the event is being shown.
+   * @param features The controller features interface for triggering edits.
+   */
   public EventPanel(Event event, LocalDate displayDate, CalendarFeatures features) {
     this.event = event;
     this.displayDate = displayDate;
     this.features = features;
 
-    setupUI();
+    setupUi();
   }
 
-  private void setupUI() {
+  /**
+   * Initializes and lays out the UI components for the event panel,
+   * calculating the required height based on available data fields.
+   */
+  private void setupUi() {
     setLayout(new BorderLayout(5, 5));
-    setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
-        BorderFactory.createEmptyBorder(10, 10, 10, 10)
-    ));
+
+    // Set compound border for a slightly raised effect
+    Border outerBorder = BorderFactory.createLineBorder(
+        new Color(180, 180, 180), 1);
+    Border innerBorder = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+    setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
+
     setBackground(new Color(245, 245, 250));
 
     // Calculate height based on how many properties are present
-    int baseHeight = 60;
     int extraHeight = 0;
-    if (hasLocation()) extraHeight += 15;
-    if (hasDescription()) extraHeight += 15;
-    if (hasStatus()) extraHeight += 15;
-    if (event.getSeriesId() != null) extraHeight += 15;
+    if (hasLocation()) {
+      extraHeight += 15;
+    }
+    if (hasDescription()) {
+      extraHeight += 15;
+    }
+    if (hasStatus()) {
+      extraHeight += 15;
+    }
+    if (event.getSeriesId() != null) {
+      extraHeight += 15;
+    }
 
+    int baseHeight = 60;
     setMaximumSize(new Dimension(Integer.MAX_VALUE, baseHeight + extraHeight));
 
     // Event details panel
@@ -58,13 +96,12 @@ public class EventPanel extends JPanel {
     DateTimeFormatter timeFormat;
     if (event.getStart().toLocalDate().equals(event.getEnd().toLocalDate())) {
       timeFormat = DateTimeFormatter.ofPattern("h:mm a");
-    }
-    else{
+    } else {
       timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a");
     }
 
-    String timeText = event.getStart().format(timeFormat) +
-        " - " + event.getEnd().format(timeFormat);
+    String timeText = event.getStart().format(timeFormat)
+        + " - " + event.getEnd().format(timeFormat);
     JLabel timeLabel = new JLabel(timeText);
     timeLabel.setFont(new Font("Arial", Font.PLAIN, 11));
     timeLabel.setForeground(new Color(80, 80, 80));
@@ -92,7 +129,7 @@ public class EventPanel extends JPanel {
 
     // Status (only if set)
     if (hasStatus()) {
-      JLabel statusLabel = new JLabel(  "Status: " + event.getStatus());
+      JLabel statusLabel = new JLabel("Status: " + event.getStatus());
       statusLabel.setFont(new Font("Arial", Font.PLAIN, 11));
       statusLabel.setForeground(new Color(80, 80, 80));
       detailsPanel.add(statusLabel);
@@ -140,20 +177,38 @@ public class EventPanel extends JPanel {
     });
   }
 
-  // Helper methods to check if properties are set
-
+  /**
+   * Checks if the event has a location property set.
+   *
+   * @return true if location is non-null and non-empty.
+   */
   private boolean hasLocation() {
     return event.getLocation() != null && !event.getLocation().trim().isEmpty();
   }
 
+  /**
+   * Checks if the event has a description property set.
+   *
+   * @return true if description is non-null and non-empty.
+   */
   private boolean hasDescription() {
     return event.getDescription() != null && !event.getDescription().trim().isEmpty();
   }
 
+  /**
+   * Checks if the event has a status property set.
+   *
+   * @return true if status is non-null.
+   */
   private boolean hasStatus() {
     return event.getStatus() != null;
   }
 
+  /**
+   * Prompts the user for the edit scope (single, from date, all series)
+   * and launches the EditEventDialog. Triggers the corresponding
+   * controller method upon confirmation.
+   */
   private void showEditOptions() {
     JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
 
@@ -172,11 +227,17 @@ public class EventPanel extends JPanel {
           options[0]
       );
 
-      if (choice == 3 || choice == -1) return; // Cancel
+      if (choice == 3 || choice == -1) {
+        return; // Cancel
+      }
 
-      if (choice == 0) editScope = "single";
-      else if (choice == 1) editScope = "fromDate";
-      else if (choice == 2) editScope = "all";
+      if (choice == 0) {
+        editScope = "single";
+      } else if (choice == 1) {
+        editScope = "fromDate";
+      } else if (choice == 2) {
+        editScope = "all";
+      }
     }
 
     // Show edit dialog
