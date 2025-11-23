@@ -8,5 +8,6 @@ package controller;
  */
 public enum ApplicationMode {
   HEADLESS,
-  INTERACTIVE
+  INTERACTIVE,
+  GUI
 }

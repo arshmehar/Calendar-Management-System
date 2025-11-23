@@ -1,6 +1,5 @@
 import controller.ApplicationMode;
 import controller.CalendarController;
-import controller.CalendarGuiController;
 import controller.IcalendarController;
 import java.io.IOException;
 import javax.swing.SwingUtilities;
@@ -19,24 +18,23 @@ public class CalendarRunner {
   public static void main(String[] args) throws IOException {
 
     IcalendarSystem model = new CalendarSystem();
+    ApplicationMode mode;
+    String commandFilePath = null;
 
     if (args.length == 0) {
-      SwingUtilities.invokeLater(() -> {
-        CalendarGuiController controller = new CalendarGuiController(model);
-        controller.run();
-      });
+      mode = ApplicationMode.GUI;
+      IcalendarController controller = new CalendarController(model);
+      controller.run(mode, commandFilePath);
       return;
     }
 
 
-    if (args.length < 2) {
+    else if (args.length < 2) {
       System.err.println("Usage: java CalendarApp --mode <interactive|headless> [commandFile]");
       System.exit(1);
     }
 
     String modeArg = args[1].toLowerCase();
-    String commandFilePath = null;
-    ApplicationMode mode;
     IcalendarView view = new CalendarView();
 
     if (modeArg.equals("interactive")) {
@@ -60,7 +58,7 @@ public class CalendarRunner {
     }
 
 
-    IcalendarController controller = new CalendarController(model, view);
+    IcalendarController controller = new CalendarController(model);
     controller.run(mode, commandFilePath);
   }
 
