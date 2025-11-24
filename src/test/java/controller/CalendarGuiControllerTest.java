@@ -471,7 +471,7 @@ public class CalendarGuiControllerTest {
   public void editCalendarTimezoneNullCalendar() {
     controller.currentCalendar  = null;
     guiLog.setLength(0);
-    controller.editCalendarName("TestCal", "NewName");
+    controller.editCalendarTimezone("UTC", "Asia/Tokyo");
     assertTrue(guiLog.toString().contains("showError"));
     assertTrue(guiLog.toString().contains("No calendar selected"));
   }
