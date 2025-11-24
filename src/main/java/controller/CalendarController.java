@@ -288,15 +288,19 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
-        .subject(subject)
-        .startDateTime(start)
-        .endDateTime(end)
-        .propertyToEdit(property)
-        .newPropertyValue(newValue)
-        .build();
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SINGLE_EVENT)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
 
-    commandExecutor.executeCommand(cmd, currentCalendar);
+      commandExecutor.executeCommand(cmd, currentCalendar);
+    } catch (IllegalStateException e) {
+      view.displayError(e.getMessage());
+    }
     viewEventsOnDate(start.toLocalDate());
   }
 
