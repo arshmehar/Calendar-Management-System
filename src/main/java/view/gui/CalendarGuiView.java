@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import model.Event;
 
 /**
@@ -52,12 +55,19 @@ public class CalendarGuiView implements IcalendarGuiView {
    * with the current month and date.
    */
   public CalendarGuiView() {
+    // Apply System Look and Feel for a modern native appearance
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
+      System.out.println("Could not set look and feel");
+    }
+
     this.currentMonth = YearMonth.now();
     this.selectedDate = LocalDate.now();
 
     frame = new JFrame("Calendar Application");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setSize(900, 700);
+    frame.setSize(1000, 750); // Slightly larger default size
     frame.setLocationRelativeTo(null);
 
     setupUi();
@@ -76,14 +86,16 @@ public class CalendarGuiView implements IcalendarGuiView {
    * Sets up the main UI layout, including the top panel, calendar grid, and right panel.
    */
   private void setupUi() {
-    frame.setLayout(new BorderLayout(10, 10));
+    frame.setLayout(new BorderLayout(0, 0)); // Removing default gaps
+    frame.getContentPane().setBackground(Color.WHITE);
 
     // Top panel
     frame.add(createTopPanel(), BorderLayout.NORTH);
 
     // Center - calendar grid
-    calendarGrid = new JPanel(new GridLayout(0, 7, 5, 5));
-    calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    calendarGrid = new JPanel(new GridLayout(0, 7, 0, 0)); // Remove gap for flat look
+    calendarGrid.setBackground(Color.WHITE);
+    calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 10)); // Add padding
     frame.add(calendarGrid, BorderLayout.CENTER);
 
     // Right panel
@@ -99,73 +111,97 @@ public class CalendarGuiView implements IcalendarGuiView {
    * @return A JPanel representing the top section of the GUI.
    */
   private JPanel createTopPanel() {
+    JPanel topContainer = new JPanel(new BorderLayout());
+    topContainer.setBackground(Color.WHITE);
+    topContainer.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
 
-    // Left - calendar selection and actions
-    JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    leftPanel.add(new JLabel("Calendar:"));
+    // =================================================================
+    // LEFT SIDE: Vertical Stack (Tools on top, Timezone below)
+    // =================================================================
+    JPanel mainLeftPanel = new JPanel();
+    mainLeftPanel.setLayout(new BoxLayout(mainLeftPanel, BoxLayout.Y_AXIS));
+    mainLeftPanel.setBackground(Color.WHITE);
+
+    // 1. Tools Panel (Calendar Selector + Buttons)
+    JPanel toolsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    toolsPanel.setBackground(Color.WHITE);
+    toolsPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to left edge of box layout
+
+    JLabel calLabel = new JLabel("Calendar:");
+    calLabel.setFont(new Font("SansSerif", Font.PLAIN, 16)); // Increased Font
+    toolsPanel.add(calLabel);
+
     calendarSelector = new JComboBox<>();
+    calendarSelector.setFont(new Font("SansSerif", Font.PLAIN, 14)); // Increased Font
     calendarSelector.addActionListener(e -> {
       if (features != null && calendarSelector.getSelectedItem() != null) {
         String selected = (String) calendarSelector.getSelectedItem();
         features.selectCalendar(selected);
       }
     });
-    leftPanel.add(calendarSelector);
+    toolsPanel.add(calendarSelector);
 
-    // *** NEW BUTTON: EDIT CALENDAR ***
+    // Renamed buttons and increased font
     JButton editCalButton = new JButton("Edit Calendar");
+    editCalButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
+    editCalButton.setFocusPainted(false);
     editCalButton.addActionListener(e -> showEditCalendarDialog());
-    leftPanel.add(editCalButton);
-    // *********************************
+    toolsPanel.add(editCalButton);
 
     JButton newCalButton = new JButton("New Calendar");
+    newCalButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
+    newCalButton.setFocusPainted(false);
     newCalButton.addActionListener(e -> showCreateCalendarDialog());
-    leftPanel.add(newCalButton);
+    toolsPanel.add(newCalButton);
 
-    JPanel topPanel = new JPanel(new BorderLayout());
+    mainLeftPanel.add(toolsPanel);
+    mainLeftPanel.add(Box.createVerticalStrut(20));
 
-    topPanel.add(leftPanel, BorderLayout.WEST);
+    // 2. Timezone Panel (Below tools)
+    JPanel tzPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+    tzPanel.setBackground(Color.WHITE);
+    tzPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    // Center - navigation
-    JPanel navPanel = new JPanel(new FlowLayout());
+    timezoneLabel = new JLabel("Current Timezone: ");
+    timezoneLabel.setFont(new Font("SansSerif", Font.ITALIC, 14));
+    timezoneLabel.setForeground(Color.GRAY);
+    tzPanel.add(timezoneLabel);
 
-    JButton prevButton = new JButton("< Prev");
+    mainLeftPanel.add(tzPanel);
+
+    // Add the combined stack to the WEST
+    topContainer.add(mainLeftPanel, BorderLayout.WEST);
+
+    // =================================================================
+    // CENTER: Navigation
+    // =================================================================
+    JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+    navPanel.setOpaque(false);
+
+    JButton prevButton = new JButton("◀");
+    prevButton.setFocusPainted(false);
     prevButton.addActionListener(e -> changeMonth(-1));
     navPanel.add(prevButton);
 
     monthLabel = new JLabel();
-    monthLabel.setFont(new Font("Arial", Font.BOLD, 16));
+    monthLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
     navPanel.add(monthLabel);
 
-    JButton nextButton = new JButton("Next >");
+    JButton nextButton = new JButton("▶");
+    nextButton.setFocusPainted(false);
     nextButton.addActionListener(e -> changeMonth(1));
     navPanel.add(nextButton);
 
     JButton todayButton = new JButton("Today");
+    todayButton.setFocusPainted(false);
     todayButton.addActionListener(e -> goToToday());
     navPanel.add(todayButton);
 
-    topPanel.add(navPanel, BorderLayout.CENTER);
+    topContainer.add(navPanel, BorderLayout.CENTER);
 
-
-    // ----------------------------------------------------------------
-    // CHANGE: Initialize with an empty string, as the controller
-    //         will set the actual value shortly after initialization.
-    timezoneLabel = new JLabel("");
-    // ----------------------------------------------------------------
-
-    timezoneLabel.setFont(new Font("Arial", Font.ITALIC, 11));
-    timezoneLabel.setForeground(Color.GRAY);
-
-    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-    bottomPanel.add(timezoneLabel);
-    bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-
-    topPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-    return topPanel;
+    return topContainer;
   }
+
 
   /**
    * Creates the right panel containing the event list display and action buttons.
@@ -173,37 +209,47 @@ public class CalendarGuiView implements IcalendarGuiView {
    * @return A JPanel representing the right section of the GUI.
    */
   private JPanel createRightPanel() {
-    JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
-    rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    rightPanel.setPreferredSize(new Dimension(350, 0));
+    JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+    rightPanel.setBackground(Color.WHITE);
+    rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 20, 20));
+    rightPanel.setPreferredSize(new Dimension(320, 0));
 
     // Header
-    JLabel eventLabel = new JLabel("Events:");
-    eventLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    JLabel eventLabel = new JLabel("Events");
+    eventLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
     rightPanel.add(eventLabel, BorderLayout.NORTH);
 
     // Scrollable event container
     eventContainer = new JPanel();
     eventContainer.setLayout(new BoxLayout(eventContainer, BoxLayout.Y_AXIS));
-    eventContainer.setBackground(Color.WHITE);
+    eventContainer.setBackground(new Color(250, 250, 250)); // Very light gray background
 
     JScrollPane scrollPane = new JScrollPane(eventContainer);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+    scrollPane.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
     rightPanel.add(scrollPane, BorderLayout.CENTER);
 
     // Action buttons
-    JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+    JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 8)); // increased gap
+    buttonPanel.setBackground(Color.WHITE);
+
+    Font buttonFont = new Font("SansSerif", Font.BOLD, 14);
 
     JButton createEventBtn = new JButton("Create Event");
+    createEventBtn.setFocusPainted(false);
+    createEventBtn.setFont(buttonFont);
     createEventBtn.addActionListener(e -> showCreateEventDialog());
     buttonPanel.add(createEventBtn);
 
-    JButton createRecurringBtn = new JButton("Create Recurring");
+    JButton createRecurringBtn = new JButton("Create Recurring Series");
+    createRecurringBtn.setFocusPainted(false);
+    createRecurringBtn.setFont(buttonFont);
     createRecurringBtn.addActionListener(e -> showCreateRecurringDialog());
     buttonPanel.add(createRecurringBtn);
 
     JButton exportBtn = new JButton("Export Calendar");
+    exportBtn.setFocusPainted(false);
+    exportBtn.setFont(buttonFont);
     exportBtn.addActionListener(e -> showExportDialog());
     buttonPanel.add(exportBtn);
 
@@ -222,7 +268,9 @@ public class CalendarGuiView implements IcalendarGuiView {
     String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
     for (String day : days) {
       JLabel label = new JLabel(day, SwingConstants.CENTER);
-      label.setFont(new Font("Arial", Font.BOLD, 12));
+      label.setFont(new Font("SansSerif", Font.BOLD, 12));
+      label.setForeground(Color.GRAY);
+      label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
       calendarGrid.add(label);
     }
 
@@ -232,7 +280,10 @@ public class CalendarGuiView implements IcalendarGuiView {
 
     // Add empty slots before start of month
     for (int i = 0; i < startDayOfWeek; i++) {
-      calendarGrid.add(new JLabel(""));
+      JPanel empty = new JPanel();
+      empty.setBackground(Color.WHITE);
+      empty.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 1, new Color(245, 245, 245)));
+      calendarGrid.add(empty);
     }
 
     int daysInMonth = currentMonth.lengthOfMonth();
@@ -240,26 +291,29 @@ public class CalendarGuiView implements IcalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      // Allow custom styling to show through
+      // Modern styling
       dayButton.setOpaque(true);
-      dayButton.setBorderPainted(true);
+      dayButton.setContentAreaFilled(true);
       dayButton.setFocusPainted(false);
+      dayButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-      // DON'T set background to white - let it use default
-      // Only set background for special cases
+      // Default: White with thin gray border
+      dayButton.setBackground(Color.WHITE);
+      dayButton.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
 
       boolean isToday = date.equals(LocalDate.now());
       boolean isSelected = date.equals(selectedDate);
 
-      // Today: yellow background
+      // Today: Soft yellow background
       if (isToday) {
-        dayButton.setBackground(Color.PINK);
+        dayButton.setBackground(new Color(255, 249, 196)); // Light Yellow
+        dayButton.setFont(new Font("SansSerif", Font.BOLD, 14));
       }
 
-      // Selected: RED border + bold
+      // Selected: Soft blue background and border
       if (isSelected) {
-        dayButton.setBorder(BorderFactory.createLineBorder(Color.BLUE, 3));
-        dayButton.setFont(new Font("Arial", Font.BOLD, 14));
+        dayButton.setBackground(new Color(225, 245, 254)); // Light Blue
+        dayButton.setBorder(BorderFactory.createLineBorder(new Color(129, 212, 250), 2));
       }
 
       dayButton.addActionListener(e -> selectDate(date));
@@ -271,7 +325,10 @@ public class CalendarGuiView implements IcalendarGuiView {
     int cellsFilled = startDayOfWeek + daysInMonth;
     int totalCells = 42;
     for (int i = cellsFilled; i < totalCells; i++) {
-      calendarGrid.add(new JLabel(""));
+      JPanel empty = new JPanel();
+      empty.setBackground(Color.WHITE);
+      empty.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 1, new Color(245, 245, 245)));
+      calendarGrid.add(empty);
     }
 
     calendarGrid.revalidate();
@@ -452,12 +509,33 @@ public class CalendarGuiView implements IcalendarGuiView {
 
     if (choice == 0 || choice == 1) {
       JFileChooser fileChooser = new JFileChooser();
-      if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-        String filePath = fileChooser.getSelectedFile().getAbsolutePath();
 
+      // 1. Configure the Filter based on selection
+      if (choice == 0) {
+        // CSV Selection
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
+        fileChooser.setFileFilter(filter);
+      } else {
+        // iCal Selection (Standard extension is .ics)
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("iCal Files (*.ical)", "ical");
+        fileChooser.setFileFilter(filter);
+      }
+
+      if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+        File file = fileChooser.getSelectedFile();
+        String filePath = file.getAbsolutePath();
+
+        // 2. Enforce the extension if the user didn't type it
         if (choice == 0) {
+          if (!filePath.toLowerCase().endsWith(".csv")) {
+            filePath += ".csv";
+          }
           features.exportToCsv(filePath);
         } else {
+          // Standard iCal extension is .ics
+          if (!filePath.toLowerCase().endsWith(".ical")) {
+            filePath += ".ical";
+          }
           features.exportToIcal(filePath);
         }
       }
@@ -491,7 +569,7 @@ public class CalendarGuiView implements IcalendarGuiView {
    * Displays the list of events for a specific date in the event panel.
    *
    * @param events The list of events to display (can be null or empty).
-   * @param date The date associated with these events.
+   * @param date   The date associated with these events.
    */
   public void displayEvents(List<Event> events, LocalDate date) {
     eventContainer.removeAll();
@@ -505,8 +583,14 @@ public class CalendarGuiView implements IcalendarGuiView {
     } else {
       for (Event event : events) {
         EventPanel eventPanel = new EventPanel(event, date, features);
-        eventContainer.add(eventPanel);
-        eventContainer.add(Box.createVerticalStrut(5));
+
+        // Wrap for spacing
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 8, 5));
+        wrapper.add(eventPanel, BorderLayout.CENTER);
+
+        eventContainer.add(wrapper);
       }
     }
 
@@ -565,7 +649,7 @@ public class CalendarGuiView implements IcalendarGuiView {
     String[] options = {"Rename", "Change Timezone"};
     int choice = JOptionPane.showOptionDialog(
         frame,
-        "What would you like to edit for the calendar '" + currentCalendarName + "'?",
+        "What would you like to edit for '" + currentCalendarName + "'?",
         "Edit Calendar",
         JOptionPane.DEFAULT_OPTION,
         JOptionPane.QUESTION_MESSAGE,

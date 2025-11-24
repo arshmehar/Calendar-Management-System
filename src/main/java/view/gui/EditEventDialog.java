@@ -63,7 +63,7 @@ public class EditEventDialog extends JDialog {
     this.event = event;
     this.editScope = editScope;
 
-    setSize(500, 250);
+    setSize(500, 280); // Adjusted height
     setLocationRelativeTo(parent);
     setResizable(false);
 
@@ -74,8 +74,8 @@ public class EditEventDialog extends JDialog {
    * Initializes and lays out all components of the dialog.
    */
   private void initComponents() {
-    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25)); // Padding
 
     // 1. Info Header
     String scopeText;
@@ -92,7 +92,7 @@ public class EditEventDialog extends JDialog {
     }
 
     JLabel infoLabel = new JLabel("Editing " + scopeText + ": " + event.getSubject());
-    infoLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    infoLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
     mainPanel.add(infoLabel, BorderLayout.NORTH);
 
 
@@ -107,7 +107,7 @@ public class EditEventDialog extends JDialog {
     propPanel.add(propertyCombo, BorderLayout.CENTER);
 
     // 2. Input Panel Container
-    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 10)); // Increased vertical gap
     centerPanel.add(propPanel);
 
     // Dynamic Input Area (CardLayout)
@@ -147,7 +147,7 @@ public class EditEventDialog extends JDialog {
     mainPanel.add(centerPanel, BorderLayout.CENTER);
 
     // 3. Buttons
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 
     JButton saveButton = new JButton("Save");
     saveButton.addActionListener(e -> {

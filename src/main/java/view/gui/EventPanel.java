@@ -55,91 +55,95 @@ public class EventPanel extends JPanel {
   private void setupUi() {
     setLayout(new BorderLayout(5, 5));
 
-    // Set compound border for a slightly raised effect
-    Border outerBorder = BorderFactory.createLineBorder(
-        new Color(180, 180, 180), 1);
-    Border innerBorder = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+    // Set compound border for a slightly raised effect and more padding
+    Border outerBorder = BorderFactory.createLineBorder(new Color(220, 220, 220), 1);
+    Border innerBorder = BorderFactory.createEmptyBorder(12, 12, 12, 12);
     setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
-    setBackground(new Color(245, 245, 250));
+    setBackground(Color.WHITE);
 
     // Calculate height based on how many properties are present
     int extraHeight = 0;
     if (hasLocation()) {
-      extraHeight += 15;
+      extraHeight += 16;
     }
     if (hasDescription()) {
-      extraHeight += 15;
+      extraHeight += 16;
     }
     if (hasStatus()) {
-      extraHeight += 15;
+      extraHeight += 16;
     }
     if (event.getSeriesId() != null) {
-      extraHeight += 15;
+      extraHeight += 16;
     }
 
-    int baseHeight = 60;
+    int baseHeight = 65;
     setMaximumSize(new Dimension(Integer.MAX_VALUE, baseHeight + extraHeight));
 
     // Event details panel
     JPanel detailsPanel = new JPanel();
     detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-    detailsPanel.setBackground(new Color(245, 245, 250));
+    detailsPanel.setBackground(Color.WHITE);
 
     // Subject (always shown)
     JLabel subjectLabel = new JLabel(event.getSubject());
-    subjectLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    subjectLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    subjectLabel.setForeground(new Color(30, 30, 30));
     detailsPanel.add(subjectLabel);
-    detailsPanel.add(Box.createVerticalStrut(3));
+    detailsPanel.add(Box.createVerticalStrut(4));
 
     // Time (always shown)
     DateTimeFormatter timeFormat;
     if (event.getStart().toLocalDate().equals(event.getEnd().toLocalDate())) {
       timeFormat = DateTimeFormatter.ofPattern("h:mm a");
     } else {
-      timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a");
+      timeFormat = DateTimeFormatter.ofPattern("MMM d, h:mm a");
     }
 
     String timeText = event.getStart().format(timeFormat)
         + " - " + event.getEnd().format(timeFormat);
     JLabel timeLabel = new JLabel(timeText);
-    timeLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-    timeLabel.setForeground(new Color(80, 80, 80));
+    timeLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    timeLabel.setForeground(new Color(100, 100, 100));
     detailsPanel.add(timeLabel);
 
     // Location (only if set)
     if (hasLocation()) {
-      JLabel locationLabel = new JLabel("Location: " + event.getLocation());
-      locationLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      detailsPanel.add(Box.createVerticalStrut(2));
+      JLabel locationLabel = new JLabel("📍 Location: " + event.getLocation());
+      locationLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
       locationLabel.setForeground(new Color(80, 80, 80));
       detailsPanel.add(locationLabel);
     }
 
     // Description (only if set)
     if (hasDescription()) {
+      detailsPanel.add(Box.createVerticalStrut(2));
       String desc = event.getDescription();
       if (desc.length() > 50) {
         desc = desc.substring(0, 47) + "...";
       }
-      JLabel descLabel = new JLabel("Description: " + desc);
-      descLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      JLabel descLabel = new JLabel("📝 Description: " + desc);
+      descLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
       descLabel.setForeground(new Color(80, 80, 80));
       detailsPanel.add(descLabel);
     }
 
     // Status (only if set)
     if (hasStatus()) {
+      detailsPanel.add(Box.createVerticalStrut(2));
       JLabel statusLabel = new JLabel("Status: " + event.getStatus());
-      statusLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
       statusLabel.setForeground(new Color(80, 80, 80));
       detailsPanel.add(statusLabel);
     }
 
     // Series indicator (only if part of series)
     if (event.getSeriesId() != null) {
-      JLabel seriesLabel = new JLabel("Recurring Event");
-      seriesLabel.setFont(new Font("Arial", Font.ITALIC, 10));
-      seriesLabel.setForeground(new Color(100, 100, 200));
+      detailsPanel.add(Box.createVerticalStrut(4));
+      JLabel seriesLabel = new JLabel("Recurring Series");
+      seriesLabel.setFont(new Font("SansSerif", Font.ITALIC, 10));
+      seriesLabel.setForeground(new Color(70, 130, 180));
       detailsPanel.add(seriesLabel);
     }
 
@@ -147,10 +151,12 @@ public class EventPanel extends JPanel {
 
     // Action buttons
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-    buttonPanel.setBackground(new Color(245, 245, 250));
+    buttonPanel.setBackground(Color.WHITE);
 
     JButton editButton = new JButton("Edit");
-    editButton.setFont(new Font("Arial", Font.PLAIN, 10));
+    editButton.setFont(new Font("SansSerif", Font.PLAIN, 11));
+    editButton.setFocusPainted(false);
+    editButton.setBackground(new Color(245, 245, 245));
     editButton.setPreferredSize(new Dimension(60, 25));
     editButton.addActionListener(e -> showEditOptions());
     buttonPanel.add(editButton);
@@ -161,17 +167,17 @@ public class EventPanel extends JPanel {
     addMouseListener(new java.awt.event.MouseAdapter() {
       @Override
       public void mouseEntered(java.awt.event.MouseEvent e) {
-        setBackground(new Color(235, 240, 250));
-        detailsPanel.setBackground(new Color(235, 240, 250));
-        buttonPanel.setBackground(new Color(235, 240, 250));
+        setBackground(new Color(248, 250, 255));
+        detailsPanel.setBackground(new Color(248, 250, 255));
+        buttonPanel.setBackground(new Color(248, 250, 255));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
       @Override
       public void mouseExited(java.awt.event.MouseEvent e) {
-        setBackground(new Color(245, 245, 250));
-        detailsPanel.setBackground(new Color(245, 245, 250));
-        buttonPanel.setBackground(new Color(245, 245, 250));
+        setBackground(Color.WHITE);
+        detailsPanel.setBackground(Color.WHITE);
+        buttonPanel.setBackground(Color.WHITE);
         setCursor(Cursor.getDefaultCursor());
       }
     });

@@ -65,7 +65,7 @@ public class EventCreationDialog extends JDialog {
     this.selectedDate = date;
     this.recurringMode = showRecurringOptions;
 
-    setSize(500, showRecurringOptions ? 500 : 250);
+    setSize(500, showRecurringOptions ? 520 : 300); // Increased height for better spacing
     setLocationRelativeTo(parent);
     setResizable(false);
 
@@ -76,8 +76,8 @@ public class EventCreationDialog extends JDialog {
    * Initializes and lays out all components of the dialog.
    */
   private void initComponents() {
-    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25)); // Padding
 
     // Basic event fields
     mainPanel.add(createBasicFieldsPanel(), BorderLayout.NORTH);
@@ -100,7 +100,7 @@ public class EventCreationDialog extends JDialog {
    * @return A JPanel containing the basic event input fields.
    */
   private JPanel createBasicFieldsPanel() {
-    JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+    JPanel panel = new JPanel(new GridLayout(3, 2, 10, 15)); // Increased vertical gap
 
     // Subject
     panel.add(new JLabel("Event Name:"));
@@ -159,12 +159,10 @@ public class EventCreationDialog extends JDialog {
     // End condition
     JPanel endConditionPanel = new JPanel();
     endConditionPanel.setLayout(new BoxLayout(endConditionPanel, BoxLayout.Y_AXIS));
-    endConditionPanel.setBorder(BorderFactory.createTitledBorder("End Condition:"));
-
     ButtonGroup group = new ButtonGroup();
 
     // Occurrences option
-    occurrencesRadio = new JRadioButton("After");
+    occurrencesRadio = new JRadioButton("Ends after:");
     occurrencesRadio.setSelected(true);
     group.add(occurrencesRadio);
 
@@ -178,7 +176,7 @@ public class EventCreationDialog extends JDialog {
 
     // Until date option
     JPanel untilPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    untilDateRadio = new JRadioButton("Until");
+    untilDateRadio = new JRadioButton("Ends by:");
     group.add(untilDateRadio);
     untilPanel.add(untilDateRadio);
 
@@ -208,14 +206,14 @@ public class EventCreationDialog extends JDialog {
   private JPanel createButtonPanel() {
 
     JButton createButton = new JButton("Create");
-    createButton.setPreferredSize(new Dimension(100, 30));
+    createButton.setPreferredSize(new Dimension(90, 30));
     createButton.addActionListener(e -> onCreateClicked());
 
     JButton cancelButton = new JButton("Cancel");
-    cancelButton.setPreferredSize(new Dimension(100, 30));
+    cancelButton.setPreferredSize(new Dimension(90, 30));
     cancelButton.addActionListener(e -> onCancelClicked());
 
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
     panel.add(createButton);
     panel.add(cancelButton);
 
