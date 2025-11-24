@@ -4,12 +4,14 @@ import controller.DateTimeParsing;
 import controller.DayOfWeekAlphabet;
 import java.io.IOException;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -433,7 +435,14 @@ public class CalendarImp implements Icalendar {
       return;
     }
 
-    String newSeriesId = property.equals("start") ? UUID.randomUUID().toString() : seriesId;
+    Event lastEvent = seriesEvents.stream()
+        .map(eventsByKey::get)
+        .max(Comparator.comparing(Event::getStart))
+        .orElse(null);
+
+
+    String newSeriesId = (property.equalsIgnoreCase("start") || property.equalsIgnoreCase("end"))
+        ? UUID.randomUUID().toString() : seriesId;
 
     List<EventKey> snapshot = new ArrayList<>(seriesEvents);
     List<EventKey> toEdit = new ArrayList<>();
@@ -454,9 +463,34 @@ public class CalendarImp implements Icalendar {
     }
 
     List<Event> updatedEvents = new ArrayList<>();
+
+    Duration shiftAmount = null;
+    if (property.equalsIgnoreCase("start")) {
+      LocalDateTime newStart = DateTimeParsing.parseDateTime(newValue);
+      shiftAmount = Duration.between(start, newStart);
+    } else if (property.equalsIgnoreCase("end")) {
+      LocalDateTime newEnd = DateTimeParsing.parseDateTime(newValue);
+      shiftAmount = Duration.between(lastEvent.getEnd(), newEnd);
+    }
+
     for (EventKey ek : toEdit) {
       Event e = eventsByKey.get(ek);
-      Event updated = updateEvent(e, property, newValue, newSeriesId);
+      Event updated;
+
+
+      if ((property.equalsIgnoreCase("start") || property.equalsIgnoreCase("end"))
+          && shiftAmount != null) {
+        LocalDateTime shiftedStart = e.getStart().plus(shiftAmount);
+        LocalDateTime shiftedEnd = e.getEnd().plus(shiftAmount);
+
+        updated = Event.getBuilderFrom(e)
+            .start(shiftedStart)
+            .end(shiftedEnd)
+            .seriesId(newSeriesId)
+            .build();
+      } else {
+        updated = updateEvent(e, property, newValue, newSeriesId);
+      }
 
       EventKey key = new EventKey(updated.getSubject(), updated.getStart(), updated.getEnd());
       if (eventsByKey.containsKey(key) && eventsByKey.get(key) != e) {
@@ -590,7 +624,7 @@ public class CalendarImp implements Icalendar {
    * This is a protected method used internally for event operations like copying.
    *
    * @param subject the subject of the events to find
-   * @param start the start date and time to match
+   * @param start   the start date and time to match
    * @return list of events matching the subject and start time
    * @throws EventNotFoundException if no events match the criteria
    */
@@ -657,7 +691,6 @@ public class CalendarImp implements Icalendar {
       case "start":
         LocalDateTime startTime = DateTimeParsing.parseDateTime(newValue);
         builder.start(startTime);
-
         break;
       case "end":
         LocalDateTime endTime = DateTimeParsing.parseDateTime(newValue);

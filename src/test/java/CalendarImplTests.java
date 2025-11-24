@@ -1,6 +1,7 @@
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import controller.DayOfWeekAlphabet;
@@ -788,8 +789,6 @@ public class CalendarImplTests {
 
     assertEquals(LocalDateTime.of(2025, 11, 18, 10, 30),
         calendar.getEventsOn(LocalDate.of(2025, 11, 18)).get(0).getStart());
-    assertEquals(LocalDateTime.of(2025, 11, 18, 10, 30),
-        calendar.getEventsOn(LocalDate.of(2025, 11, 25)).get(0).getStart());
 
     String laterSeriesId = calendar.getEventsOn(LocalDate.of(2025, 11, 18))
         .get(0).getSeriesId();
@@ -797,5 +796,143 @@ public class CalendarImplTests {
     assertEquals(laterSeriesId,
         calendar.getEventsOn(LocalDate.of(2025, 11, 25)).get(0).getSeriesId());
   }
+
+  @Test
+  public void testEditAllInSeries_ShiftStartTime() throws Exception {
+
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);   // Oct 1st, 11 AM
+    LocalDateTime newStart = LocalDateTime.of(2023, 10, 1, 10, 0);
+
+    Set<DayOfWeekAlphabet> days = new HashSet<>();
+    days.add(DayOfWeekAlphabet.U);
+    days.add(DayOfWeekAlphabet.M);
+    days.add(DayOfWeekAlphabet.T);
+    days.add(DayOfWeekAlphabet.W);
+    days.add(DayOfWeekAlphabet.R);
+
+    calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
+
+    calendar.editAllInSeries("Meeting", seriesStart, "start", newStart.toString());
+
+    List<Event> eventsDay1 = calendar.getEventsOn(LocalDate.of(2023, 10, 1));
+    assertEquals(10, eventsDay1.get(0).getStart().getHour());
+    assertEquals(12, eventsDay1.get(0).getEnd().getHour());
+
+    List<Event> eventsDay3 = calendar.getEventsOn(LocalDate.of(2023, 10, 3));
+    assertEquals(10, eventsDay3.get(0).getStart().getHour());
+  }
+
+  @Test
+  public void testEditAllInSeries_ShiftEndTime() throws Exception {
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+
+    Set<DayOfWeekAlphabet> days = new HashSet<>();
+    days.add(DayOfWeekAlphabet.U);
+    days.add(DayOfWeekAlphabet.M);
+    days.add(DayOfWeekAlphabet.T);
+    days.add(DayOfWeekAlphabet.W);
+    days.add(DayOfWeekAlphabet.R);
+
+    calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
+
+    LocalDateTime newEnd = LocalDateTime.of(2023, 10, 1, 12, 0);
+    calendar.editAllInSeries("Meeting", seriesStart, "end", newEnd.toString());
+
+    List<Event> eventsDay1 = calendar.getEventsOn(LocalDate.of(2023, 10, 1));
+    assertEquals(10, eventsDay1.get(0).getStart().getHour());
+    assertEquals(12, eventsDay1.get(0).getEnd().getHour());
+  }
+
+  @Test
+  public void testEditEventsFromDate_ChangeLocation() throws Exception {
+
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+
+    Set<DayOfWeekAlphabet> days = new HashSet<>();
+    days.add(DayOfWeekAlphabet.U);
+    days.add(DayOfWeekAlphabet.M);
+    days.add(DayOfWeekAlphabet.T);
+    days.add(DayOfWeekAlphabet.W);
+    days.add(DayOfWeekAlphabet.R);
+
+    calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
+    LocalDateTime startFrom = LocalDateTime.of(2023, 10, 3, 9, 0);
+    calendar.editEventsFromDate("Meeting", startFrom, "location", "Room B");
+
+    List<Event> eventsDay1 = calendar.getEventsOn(LocalDate.of(2023, 10, 1));
+    assertNull(eventsDay1.get(0).getLocation());
+
+    List<Event> eventsDay3 = calendar.getEventsOn(LocalDate.of(2023, 10, 3));
+    assertEquals("Room B", eventsDay3.get(0).getLocation());
+
+    List<Event> eventsDay5 = calendar.getEventsOn(LocalDate.of(2023, 10, 5));
+    assertEquals("Room B", eventsDay5.get(0).getLocation());
+  }
+
+  @Test
+  public void testEditEventsFromDate_ShiftSeriesForward() throws Exception {
+
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+
+    Set<DayOfWeekAlphabet> days = new HashSet<>();
+    days.add(DayOfWeekAlphabet.U);
+    days.add(DayOfWeekAlphabet.M);
+    days.add(DayOfWeekAlphabet.T);
+    days.add(DayOfWeekAlphabet.W);
+    days.add(DayOfWeekAlphabet.R);
+
+    calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
+    LocalDateTime pivotEventStart = LocalDateTime.of(2023, 10, 3, 9, 0);
+    LocalDateTime newStart = LocalDateTime.of(2023, 10, 3, 11, 0); // +2 Hours
+
+    calendar.editEventsFromDate("Meeting", pivotEventStart, "start", newStart.toString());
+
+    List<Event> eventsDay2 = calendar.getEventsOn(LocalDate.of(2023, 10, 2));
+    assertEquals(9, eventsDay2.get(0).getStart().getHour());
+
+    List<Event> eventsDay3 = calendar.getEventsOn(LocalDate.of(2023, 10, 3));
+    assertEquals(11, eventsDay3.get(0).getStart().getHour());
+    assertEquals(13, eventsDay3.get(0).getEnd().getHour());
+
+    List<Event> eventsDay4 = calendar.getEventsOn(LocalDate.of(2023, 10, 4));
+    assertEquals(11, eventsDay4.get(0).getStart().getHour());
+  }
+
+
+  @Test
+  public void testEditEventsFromDate_ShiftSeriesEndDate() throws Exception {
+
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+
+    Set<DayOfWeekAlphabet> days = new HashSet<>();
+    days.add(DayOfWeekAlphabet.U);
+    days.add(DayOfWeekAlphabet.M);
+    days.add(DayOfWeekAlphabet.T);
+    days.add(DayOfWeekAlphabet.W);
+    days.add(DayOfWeekAlphabet.R);
+
+    calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
+
+    LocalDateTime pivotEventStart = LocalDateTime.of(2023, 10, 3, 9, 0);
+    LocalDateTime newEnd = LocalDateTime.of(2023, 10, 3, 13, 0);
+
+    calendar.editEventsFromDate("Meeting", pivotEventStart, "end", newEnd.toString());
+
+    assertEquals(9, calendar.getEventsOn(LocalDate.of(2023, 10, 2)).get(0).getStart().getHour());
+    Event day3 = calendar.getEventsOn(LocalDate.of(2023, 10, 3)).get(0);
+    assertEquals(11, day3.getStart().getHour());
+    assertEquals(13, day3.getEnd().getHour());
+  }
+
 
 }
