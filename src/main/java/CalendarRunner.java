@@ -22,41 +22,36 @@ public class CalendarRunner {
 
     if (args.length == 0) {
       mode = ApplicationMode.GUI;
-      IcalendarController controller = new CalendarController(model);
-      controller.run(mode, commandFilePath);
-      return;
-    } else if (args.length < 2) {
-      System.err.println("Usage: java CalendarApp --mode <interactive|headless> [commandFile]");
-      System.exit(1);
-    }
-
-    String modeArg = args[1].toLowerCase();
-    IcalendarView view = new CalendarView();
-
-    if (modeArg.equals("interactive")) {
-      mode = ApplicationMode.INTERACTIVE;
-
-    } else if (modeArg.equals("headless")) {
-      mode = ApplicationMode.HEADLESS;
-
-      if (args.length < 3) {
-        System.err.println("Headless mode requires a command file");
+    } else {
+      if (args.length == 1) {
+        System.err.println("Usage: java CalendarApp --mode <interactive|headless> [commandFile]");
         System.exit(1);
       }
 
-      commandFilePath = args[2];
+      String modeArg = args[1].toLowerCase();
 
-    } else {
-      System.err.println("Invalid mode. Must be 'interactive' or 'headless'");
-      System.exit(1);
-      return;
+      if (modeArg.equals("interactive")) {
+        mode = ApplicationMode.INTERACTIVE;
+
+      } else if (modeArg.equals("headless")) {
+        mode = ApplicationMode.HEADLESS;
+
+        if (args.length < 3) {
+          System.err.println("Headless mode requires a command file");
+          System.exit(1);
+        }
+
+        commandFilePath = args[2];
+
+      } else {
+        System.err.println("Invalid mode. Must be 'interactive' or 'headless'");
+        System.exit(1);
+        return;
+      }
     }
-
 
     IcalendarController controller = new CalendarController(model);
     controller.run(mode, commandFilePath);
   }
-
-
 }
 
