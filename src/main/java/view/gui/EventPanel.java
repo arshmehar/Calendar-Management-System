@@ -1,5 +1,3 @@
-// view/gui/EventPanel.java
-
 package view.gui;
 
 import controller.features.CalendarFeatures;
@@ -55,14 +53,12 @@ public class EventPanel extends JPanel {
   private void setupUi() {
     setLayout(new BorderLayout(5, 5));
 
-    // Set compound border for a slightly raised effect and more padding
     Border outerBorder = BorderFactory.createLineBorder(new Color(220, 220, 220), 1);
     Border innerBorder = BorderFactory.createEmptyBorder(12, 12, 12, 12);
     setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
     setBackground(Color.WHITE);
 
-    // Calculate height based on how many properties are present
     int extraHeight = 0;
     if (hasLocation()) {
       extraHeight += 16;
@@ -80,19 +76,16 @@ public class EventPanel extends JPanel {
     int baseHeight = 65;
     setMaximumSize(new Dimension(Integer.MAX_VALUE, baseHeight + extraHeight));
 
-    // Event details panel
     JPanel detailsPanel = new JPanel();
     detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
     detailsPanel.setBackground(Color.WHITE);
 
-    // Subject (always shown)
     JLabel subjectLabel = new JLabel(event.getSubject());
     subjectLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
     subjectLabel.setForeground(new Color(30, 30, 30));
     detailsPanel.add(subjectLabel);
     detailsPanel.add(Box.createVerticalStrut(4));
 
-    // Time (always shown)
     DateTimeFormatter timeFormat;
     if (event.getStart().toLocalDate().equals(event.getEnd().toLocalDate())) {
       timeFormat = DateTimeFormatter.ofPattern("h:mm a");
@@ -107,7 +100,6 @@ public class EventPanel extends JPanel {
     timeLabel.setForeground(new Color(100, 100, 100));
     detailsPanel.add(timeLabel);
 
-    // Location (only if set)
     if (hasLocation()) {
       detailsPanel.add(Box.createVerticalStrut(2));
       JLabel locationLabel = new JLabel("📍 Location: " + event.getLocation());
@@ -116,7 +108,6 @@ public class EventPanel extends JPanel {
       detailsPanel.add(locationLabel);
     }
 
-    // Description (only if set)
     if (hasDescription()) {
       detailsPanel.add(Box.createVerticalStrut(2));
       String desc = event.getDescription();
@@ -129,7 +120,6 @@ public class EventPanel extends JPanel {
       detailsPanel.add(descLabel);
     }
 
-    // Status (only if set)
     if (hasStatus()) {
       detailsPanel.add(Box.createVerticalStrut(2));
       JLabel statusLabel = new JLabel("Status: " + event.getStatus());
@@ -138,7 +128,6 @@ public class EventPanel extends JPanel {
       detailsPanel.add(statusLabel);
     }
 
-    // Series indicator (only if part of series)
     if (event.getSeriesId() != null) {
       detailsPanel.add(Box.createVerticalStrut(4));
       JLabel seriesLabel = new JLabel("Recurring Series");
@@ -149,7 +138,6 @@ public class EventPanel extends JPanel {
 
     add(detailsPanel, BorderLayout.CENTER);
 
-    // Action buttons
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
     buttonPanel.setBackground(Color.WHITE);
 
@@ -163,7 +151,6 @@ public class EventPanel extends JPanel {
 
     add(buttonPanel, BorderLayout.EAST);
 
-    // Hover effect
     addMouseListener(new java.awt.event.MouseAdapter() {
       @Override
       public void mouseEntered(java.awt.event.MouseEvent e) {
@@ -218,7 +205,6 @@ public class EventPanel extends JPanel {
   private void showEditOptions() {
     JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
 
-    // If it's a series event, ask edit scope
     String editScope = "single";
     if (event.getSeriesId() != null) {
       String[] options = {"This Event Only", "This and Future", "All in Series", "Cancel"};
@@ -234,7 +220,7 @@ public class EventPanel extends JPanel {
       );
 
       if (choice == 3 || choice == -1) {
-        return; // Cancel
+        return;
       }
 
       if (choice == 0) {
@@ -246,7 +232,6 @@ public class EventPanel extends JPanel {
       }
     }
 
-    // Show edit dialog
     EditEventDialog editDialog = new EditEventDialog(
         parentFrame,
         event,

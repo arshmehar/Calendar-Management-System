@@ -663,7 +663,7 @@ public class CalendarSystemTest {
     Icalendar london = calendarSystem.getCalendar("London");
     london.addEvent("Late Meeting",
         LocalDateTime.of(2025, 11, 4, 23, 0),
-        LocalDateTime.of(2025, 11, 5, 1, 0)); // crosses midnight
+        LocalDateTime.of(2025, 11, 5, 1, 0));
 
     LocalDate startDate = LocalDate.of(2025, 11, 4);
     LocalDate targetStartDate = LocalDate.of(2025, 12, 1);
@@ -1202,7 +1202,7 @@ public class CalendarSystemTest {
         LocalDateTime.of(2026, 1, 5, 0, 0),
         LocalDateTime.of(2026, 2, 5, 23, 59));
 
-    assertTrue(allCopied.size() >= 5); // At least 5 occurrences
+    assertTrue(allCopied.size() >= 5);
 
     String copiedSeriesId = allCopied.get(0).getSeriesId();
     assertNotNull(copiedSeriesId);

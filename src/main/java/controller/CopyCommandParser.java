@@ -54,7 +54,7 @@ public class CopyCommandParser {
     String args = command.substring("copy event ".length());
 
     String[] nameAndRest = ExtractUtil.extractSubjectAndRest(args);
-    String rest = nameAndRest[1]; // "on <datetime> --target <cal> to <datetime>"
+    String rest = nameAndRest[1];
 
     if (!rest.toLowerCase().startsWith("on ")) {
       throw new CommandParseException(
@@ -94,7 +94,7 @@ public class CopyCommandParser {
   }
 
   private static String getTargetDateTimeStr(String[] calAndRest) {
-    String remaining = calAndRest[1]; // should be "to <datetime>"
+    String remaining = calAndRest[1];
 
     if (!remaining.toLowerCase().startsWith("to ")) {
       throw new CommandParseException(
@@ -194,7 +194,6 @@ public class CopyCommandParser {
     String[] result = new String[2];
 
     if (text.startsWith("\"")) {
-      // Quoted calendar name (multi-word)
       int endQuoteIdx = text.indexOf('"', 1);
       if (endQuoteIdx == -1) {
         throw new CommandParseException("Mismatched quotes in calendar name.");
@@ -204,7 +203,6 @@ public class CopyCommandParser {
       result[1] = text.substring(endQuoteIdx + 1).trim();
 
     } else {
-      // Unquoted calendar name (single word)
       int firstSpaceIdx = text.indexOf(' ');
       if (firstSpaceIdx == -1) {
         throw new CommandParseException("Command missing arguments after calendar name.");

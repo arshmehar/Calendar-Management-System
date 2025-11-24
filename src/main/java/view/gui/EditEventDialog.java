@@ -30,7 +30,7 @@ import model.Event;
  * Switches between Text, Date/Time, and Dropdown inputs based on selection.
  */
 public class EditEventDialog extends JDialog {
-  // Card Identifiers
+
   private static final String CARD_TEXT = "TEXT";
   private static final String CARD_DATETIME = "DATETIME";
   private static final String CARD_STATUS = "STATUS";
@@ -39,12 +39,10 @@ public class EditEventDialog extends JDialog {
   private final String editScope;
   private boolean confirmed = false;
 
-  // UI Components
   private JComboBox<String> propertyCombo;
   private JPanel inputContainer;
   private CardLayout cardLayout;
 
-  // Input Fields
   private JTextField textField;
   private JSpinner dateSpinner;
   private JSpinner timeSpinner;
@@ -63,7 +61,7 @@ public class EditEventDialog extends JDialog {
     this.event = event;
     this.editScope = editScope;
 
-    setSize(500, 280); // Adjusted height
+    setSize(500, 280);
     setLocationRelativeTo(parent);
     setResizable(false);
 
@@ -75,9 +73,8 @@ public class EditEventDialog extends JDialog {
    */
   private void initComponents() {
     JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25)); // Padding
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
 
-    // 1. Info Header
     String scopeText;
     switch (editScope) {
       case "single":
@@ -96,25 +93,20 @@ public class EditEventDialog extends JDialog {
     mainPanel.add(infoLabel, BorderLayout.NORTH);
 
 
-
-    // Property Selector
     JPanel propPanel = new JPanel(new BorderLayout(10, 10));
     propPanel.add(new JLabel("Property to edit:"), BorderLayout.WEST);
 
-    String[] properties = {"subject", "description", "location", "start", "end", "status"};
+    String[] properties = {"Subject", "Description", "Location", "Start", "End", "Status"};
     propertyCombo = new JComboBox<>(properties);
     propertyCombo.addActionListener(e -> updateInputView());
     propPanel.add(propertyCombo, BorderLayout.CENTER);
 
-    // 2. Input Panel Container
-    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 10)); // Increased vertical gap
+    JPanel centerPanel = new JPanel(new GridLayout(2, 1, 5, 10));
     centerPanel.add(propPanel);
 
-    // Dynamic Input Area (CardLayout)
     cardLayout = new CardLayout();
     inputContainer = new JPanel(cardLayout);
 
-    // --- Card 1: Text Input ---
     JPanel textPanel = new JPanel(new BorderLayout());
     textField = new JTextField();
     textPanel.add(textField, BorderLayout.CENTER);
@@ -137,7 +129,6 @@ public class EditEventDialog extends JDialog {
 
     inputContainer.add(dateTimePanel, CARD_DATETIME);
 
-    // --- Card 3: Status Input ---
     JPanel statusPanel = new JPanel(new BorderLayout());
     statusCombo = new JComboBox<>(new String[] {"PUBLIC", "PRIVATE"});
     statusPanel.add(statusCombo, BorderLayout.CENTER);
@@ -146,7 +137,6 @@ public class EditEventDialog extends JDialog {
     centerPanel.add(inputContainer);
     mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-    // 3. Buttons
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 
     JButton saveButton = new JButton("Save");
@@ -167,7 +157,6 @@ public class EditEventDialog extends JDialog {
 
     add(mainPanel);
 
-    // Initialize the view based on the default selection
     updateInputView();
   }
 
@@ -180,6 +169,7 @@ public class EditEventDialog extends JDialog {
     if (selected == null) {
       return;
     }
+    selected = selected.toLowerCase();
 
     switch (selected) {
       case "start":
@@ -198,7 +188,7 @@ public class EditEventDialog extends JDialog {
         cardLayout.show(inputContainer, CARD_STATUS);
         break;
 
-      default: // name, location, description
+      default:
         String textVal = "";
         if (selected.equals("subject")) {
           textVal = event.getSubject();
@@ -223,9 +213,13 @@ public class EditEventDialog extends JDialog {
   private boolean validation() {
     String prop = (String) propertyCombo.getSelectedItem();
 
-    // Basic empty check for text fields
+    if (prop == null) {
+      return false;
+    }
+
+    prop =  prop.toLowerCase();
+
     if (inputContainer.getComponent(0).isVisible() && textField.getText().trim().isEmpty()) {
-      // Check if the property being edited is subject/name
       if (Objects.equals(prop, "name") || Objects.equals(prop, "subject")) {
         JOptionPane.showMessageDialog(this, "Event name/subject cannot be empty.");
         return false;
@@ -250,7 +244,11 @@ public class EditEventDialog extends JDialog {
    * @return The property name string.
    */
   public String getProperty() {
-    return (String) propertyCombo.getSelectedItem();
+    String selected = (String) propertyCombo.getSelectedItem();
+    if (selected != null) {
+      return selected.toLowerCase();
+    }
+    return "";
   }
 
   /**
@@ -264,11 +262,11 @@ public class EditEventDialog extends JDialog {
     if (prop == null) {
       return "";
     }
+    prop =  prop.toLowerCase();
 
     switch (prop) {
       case "start":
       case "end":
-        // Combine Date and Time spinners into ISO format string
         Date d = (Date) dateSpinner.getValue();
         Date t = (Date) timeSpinner.getValue();
 
@@ -277,7 +275,9 @@ public class EditEventDialog extends JDialog {
             t.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
         );
 
+        System.out.println(ldt);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        System.out.println(ldt.format(formatter));
         return ldt.format(formatter);
 
       case "status":

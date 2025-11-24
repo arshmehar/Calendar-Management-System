@@ -10,7 +10,6 @@ import java.util.Set;
  * Each feature knows how to gather its required input and execute.
  */
 public interface CalendarFeatures {
-  // ==================== CALENDAR MANAGEMENT ====================
 
   /**
    * Create a new calendar.
@@ -32,7 +31,6 @@ public interface CalendarFeatures {
    */
   void editCalendarTimezone(String calendarName, String newTimezone);
 
-  // ==================== EVENT CREATION ====================
 
   /**
    * Create a single event.
@@ -62,7 +60,6 @@ public interface CalendarFeatures {
                                      Set<DayOfWeekAlphabet> weekdays,
                                      LocalDate endDate);
 
-  // ==================== EVENT EDITING ====================
 
   /**
    * Edit a single event.
@@ -82,7 +79,6 @@ public interface CalendarFeatures {
   void editAllInSeries(String subject, LocalDateTime anyEventStart,
                        String property, String newValue);
 
-  // ==================== EVENT QUERYING ====================
 
   /**
    * View events on a specific date.
@@ -99,8 +95,6 @@ public interface CalendarFeatures {
    */
   void checkStatus(LocalDateTime dateTime);
 
-
-  // ==================== EXPORT ====================
 
   /**
    * Export calendar to CSV.

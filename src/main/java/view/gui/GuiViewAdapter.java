@@ -33,7 +33,6 @@ public class GuiViewAdapter implements IcalendarView {
    */
   @Override
   public void displayWelcome() {
-    // GUI doesn't need a welcome message, or could show a splash screen
   }
 
   /**
@@ -42,7 +41,7 @@ public class GuiViewAdapter implements IcalendarView {
    */
   @Override
   public void displayPrompt() {
-    // GUI is event-driven, no prompt needed
+
   }
 
   /**
@@ -108,7 +107,7 @@ public class GuiViewAdapter implements IcalendarView {
    */
   @Override
   public void displayEventsForRange(List<Event> events, LocalDateTime start, LocalDateTime end) {
-    // The GUI main view is day-based, so for ranges we display a popup list
+
     StringBuilder sb = new StringBuilder();
     sb.append("Events from ").append(start.toLocalDate()).append(" to ").append(end.toLocalDate())
         .append(":\n\n");
@@ -116,7 +115,7 @@ public class GuiViewAdapter implements IcalendarView {
     if (events == null || events.isEmpty()) {
       sb.append("No events found.");
     } else {
-      for (Event event : events) { // Changed 'e' to 'event' for clarity
+      for (Event event : events) {
         sb.append(event.toString()).append("\n");
       }
     }
