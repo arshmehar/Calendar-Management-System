@@ -82,7 +82,6 @@ public class CalendarGuiControllerTest {
     guiLog.setLength(0);
     controller.createCalendar("NewCal", "UTC");
 
-    // Verify controller called model
     assertTrue(systemLog.toString().contains("createCalendar"));
     assertTrue(systemLog.toString().contains("name=NewCal"));
     assertTrue(systemLog.toString().contains("timezone=UTC"));
@@ -426,7 +425,6 @@ public class CalendarGuiControllerTest {
   public void testMultipleOperationsUpdateGui() {
     guiLog.setLength(0);
 
-    // Create event
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     controller.createSingleEvent("Meeting", start, end);
@@ -436,10 +434,8 @@ public class CalendarGuiControllerTest {
     controller.viewEventsOnDate(LocalDate.of(2025, 1, 15));
 
     String log = guiLog.toString();
-
-    // Verify GUI was updated after each operation
     int displayCount = log.split("displayEvents").length - 1;
-    assertTrue(displayCount >= 3); // At least 3 times
+    assertTrue(displayCount >= 3);
   }
 
   /**
@@ -565,11 +561,8 @@ public class CalendarGuiControllerTest {
   public void testCheckStatusNullCalendar() {
     controller.currentCalendar = null;
     guiLog.setLength(0);
-
     LocalDateTime dateTime = LocalDateTime.of(2025, 1, 15, 14, 30);
     controller.checkStatus(dateTime);
-
-    // Verify error was shown
     assertTrue(guiLog.toString().contains("showError"));
     assertTrue(guiLog.toString().contains("No calendar selected"));
   }
