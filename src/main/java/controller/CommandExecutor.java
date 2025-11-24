@@ -20,6 +20,7 @@ import view.IcalendarView;
 
 class CommandExecutor {
 
+  private Icalendar currentCalendar;
   private final IcalendarSystem model;
   private final IcalendarView view;
   private final Map<CommandType, Consumer<ParsedCommand>> commandHandlers;
@@ -32,7 +33,7 @@ class CommandExecutor {
   }
 
   protected void executeCommand(ParsedCommand cmd, Icalendar currentCalendar)
-      throws IllegalStateException, DuplicateCalendarException, InvalidTimezoneException {
+      throws IllegalStateException {
     CommandType type = cmd.getCommandType();
     this.currentCalendar = currentCalendar;
 
@@ -69,13 +70,11 @@ class CommandExecutor {
 
   }
 
-  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit)
-      throws DuplicateCalendarException, InvalidTimezoneException { // <--- ADD THROWS
+  private void handleEditCalendar(ParsedCommand cmd, boolean isNameEdit) {
 
-    String newProperty = null;
     try {
       String calName = cmd.getCalendarName();
-      newProperty = cmd.getNewPropertyValue(); // Variable set inside try block
+      String newProperty = cmd.getNewPropertyValue();
 
       if (isNameEdit) {
         model.renameCalendar(calName, newProperty);
@@ -86,15 +85,10 @@ class CommandExecutor {
         view.displaySuccess(
             "Timezone of calendar:" + calName + " edited to " + newProperty + " successfully");
       }
-    } catch (DuplicateCalendarException e) {
-      // Catch, display GUI error via console adapter, and RETHROW to halt controller flow
-      view.displayError(
-          "Error renaming calendar: Calendar with name '" + newProperty + "' already exists.");
-      throw e;
-    } catch (InvalidTimezoneException e) {
+    } catch (DuplicateCalendarException | InvalidTimezoneException e) {
       view.displayError(e.getMessage());
-      throw e;
     }
+
   }
 
 
@@ -307,6 +301,7 @@ class CommandExecutor {
       view.displayError("Error copying events: " + e.getMessage());
     }
   }
+
   /**
    * Registers all command handlers.
    * Replaces the switch cases with direct method references.

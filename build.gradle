@@ -72,7 +72,7 @@ tasks.withType(Checkstyle) {
 
 // PIT Mutation Testing Configuration
 pitest {
-    targetClasses = ['calendar.**'] // Adjust to match your package structure
+    targetClasses = ['controller.*', 'model.*', 'view.*'] // Adjust to match your package structure
     targetTests = ['*'] // Adjust to match your test package structure
     pitestVersion = '1.15.8'
     threads = 4
