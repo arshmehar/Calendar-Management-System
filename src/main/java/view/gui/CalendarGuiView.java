@@ -492,34 +492,6 @@ public class CalendarGuiView implements IcalendarGuiView {
   /**
    * Displays the dialog for exporting the calendar contents.
    */
-//  private void showExportDialog() {
-//    if (features == null) {
-//      return;
-//    }
-//
-//    String[] options = {"CSV", "iCal"};
-//    int choice = JOptionPane.showOptionDialog(frame,
-//        "Select export format:",
-//        "Export Calendar",
-//        JOptionPane.YES_NO_CANCEL_OPTION,
-//        JOptionPane.QUESTION_MESSAGE,
-//        null,
-//        options,
-//        options[0]);
-//
-//    if (choice == 0 || choice == 1) {
-//      JFileChooser fileChooser = new JFileChooser();
-//      if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-//        String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-//
-//        if (choice == 0) {
-//          features.exportToCsv(filePath);
-//        } else {
-//          features.exportToIcal(filePath);
-//        }
-//      }
-//    }
-//  }
   private void showExportDialog() {
     if (features == null) {
       return;
