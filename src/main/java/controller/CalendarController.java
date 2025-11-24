@@ -30,7 +30,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
   private final CommandParser commandParser;
   private IcalendarView view;
   private IcalendarGuiView guiView;
-  private Icalendar currentCalendar;
+  Icalendar currentCalendar;
   private CommandExecutor commandExecutor;
 
   /**
@@ -42,6 +42,24 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     this.model = model;
     this.currentCalendar = null;
     this.commandParser = new CommandParser();
+  }
+
+
+  /**
+   * Constructor for testing - accepts injected views.
+   * Supports both text-based and GUI testing.
+   *
+   * @param model The application's data model (IcalendarSystem).
+   * @param view The text-based view for displaying output.
+   * @param guiView The GUI view (can be null for text-only tests).
+   */
+  public CalendarController(IcalendarSystem model, IcalendarView view, IcalendarGuiView guiView) {
+    this.model = model;
+    this.view = view;
+    this.guiView = guiView;
+    this.currentCalendar = null;
+    this.commandParser = new CommandParser();
+    this.commandExecutor = new CommandExecutor(model, view);
   }
 
 
@@ -108,7 +126,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
   public IcalendarView getView() {
     return this.view;
   }
-
 
   /**
    * Creates a default calendar if none exists and sets it as the current context.
