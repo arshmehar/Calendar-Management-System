@@ -1,3 +1,77 @@
+//package mocks;
+//
+//import controller.DayOfWeekAlphabet;
+//import java.time.LocalDate;
+//import java.time.LocalDateTime;
+//import java.time.ZoneId;
+//import java.util.ArrayList;
+//import java.util.HashSet;
+//import java.util.List;
+//import java.util.Set;
+//import model.DuplicateEventException;
+//import model.Event;
+//import model.EventNotFoundException;
+//import model.Icalendar;
+//
+///**
+// * Mock implementation of Icalendar for testing.
+// */
+//public class MockIcalendar implements Icalendar {
+//  private final StringBuilder log;
+//  private final int uniqueCode;
+////  private final String calendarName;
+////  private final ZoneId timezone;
+//  private boolean shouldThrowDuplicate;
+//  private boolean shouldThrowNotFound;
+//
+//  private String calendarName = "MockCalendar";  // ADD THIS
+//  private ZoneId timezone = ZoneId.systemDefault();
+//
+//  /**
+//   * Constructs a mockIcalendar with log and unique code.
+//   *
+//   * @param log        StringBuilder to record all method calls
+//   * @param uniqueCode predictable value to return from queries
+//   */
+//  public MockIcalendar(StringBuilder log, int uniqueCode) {
+//    this(log, uniqueCode, "MockCalendar", ZoneId.of("America/New_York"));
+//  }
+//
+//  /**
+//   * Constructs a mockIcalendar with custom name and timezone.
+//   *
+//   * @param log          StringBuilder to record all method calls
+//   * @param uniqueCode   predictable value to return from queries
+//   * @param calendarName name of the calendar
+//   * @param timezone     timezone of the calendar
+//   */
+//  public MockIcalendar(StringBuilder log, int uniqueCode, String calendarName, ZoneId timezone) {
+//    this.log = log;
+//    this.uniqueCode = uniqueCode;
+//    this.calendarName = calendarName;
+//    this.timezone = timezone;
+//    this.shouldThrowDuplicate = false;
+//    this.shouldThrowNotFound = false;
+//  }
+//
+//  /**
+//   * Sets whether to throw duplicate exception.
+//   *
+//   * @param shouldThrow true to throw exception
+//   */
+//  public void setShouldThrowDuplicate(boolean shouldThrow) {
+//    this.shouldThrowDuplicate = shouldThrow;
+//  }
+//
+//  /**
+//   * Sets whether to throw not found exception.
+//   *
+//   * @param shouldThrow true to throw exception
+//   */
+//  public void setShouldThrowNotFound(boolean shouldThrow) {
+//    this.shouldThrowNotFound = shouldThrow;
+//  }
+
 package mocks;
 
 import controller.DayOfWeekAlphabet;
@@ -19,10 +93,11 @@ import model.Icalendar;
 public class MockIcalendar implements Icalendar {
   private final StringBuilder log;
   private final int uniqueCode;
-  private final String calendarName;
-  private final ZoneId timezone;
   private boolean shouldThrowDuplicate;
   private boolean shouldThrowNotFound;
+
+  private String calendarName = "MockCalendar";
+  private ZoneId timezone = ZoneId.systemDefault();
 
   /**
    * Constructs a mockIcalendar with log and unique code.
@@ -31,7 +106,12 @@ public class MockIcalendar implements Icalendar {
    * @param uniqueCode predictable value to return from queries
    */
   public MockIcalendar(StringBuilder log, int uniqueCode) {
-    this(log, uniqueCode, "MockCalendar", ZoneId.of("America/New_York"));
+    this.log = log;
+    this.uniqueCode = uniqueCode;
+    this.calendarName = "MockCalendar";
+    this.timezone = ZoneId.of("America/New_York");
+    this.shouldThrowDuplicate = false;
+    this.shouldThrowNotFound = false;
   }
 
   /**
@@ -51,6 +131,19 @@ public class MockIcalendar implements Icalendar {
     this.shouldThrowNotFound = false;
   }
 
+  // ADD THIS METHOD
+  public int getUniqueCode() {
+    return uniqueCode;
+  }
+
+  public void setCalendarName(String name) {
+    this.calendarName = name;
+  }
+
+  public void setTimezone(ZoneId timezone) {
+    this.timezone = timezone;
+  }
+
   /**
    * Sets whether to throw duplicate exception.
    *
@@ -67,6 +160,16 @@ public class MockIcalendar implements Icalendar {
    */
   public void setShouldThrowNotFound(boolean shouldThrow) {
     this.shouldThrowNotFound = shouldThrow;
+  }
+
+  @Override
+  public String getCalendarName() {
+    return calendarName;
+  }
+
+  @Override
+  public ZoneId getCalendarTimeZone() {
+    return timezone;
   }
 
   @Override
@@ -186,18 +289,6 @@ public class MockIcalendar implements Icalendar {
     return new HashSet<>();
   }
 
-  @Override
-  public String getCalendarName() {
-    log.append("getCalendarName").append(System.lineSeparator());
-    return calendarName;
-  }
-
-  @Override
-  public ZoneId getCalendarTimeZone() {
-    log.append("getCalendarTimeZone").append(System.lineSeparator());
-    return timezone;
-  }
-
   /**
    * Gets the log of method calls.
    *
@@ -213,4 +304,5 @@ public class MockIcalendar implements Icalendar {
   public void clearLog() {
     log.setLength(0);
   }
+
 }
