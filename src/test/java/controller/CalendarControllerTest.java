@@ -1408,4 +1408,14 @@ public class CalendarControllerTest {
     Files.deleteIfExists(Paths.get(path));
   }
 
+
+  @Test
+  public void testCreateSingleAllDayEvent2() {
+    controller.processCommand("create event Conference on 2025-01-20");
+    assertTrue(calendarLog.toString().contains("addEvent: Conference"));
+    assertTrue(calendarLog.toString().contains("2025-01-20T08:00"));
+    assertTrue(calendarLog.toString().contains("2025-01-20T17:00"));
+    assertTrue(viewLog.toString().contains("displaySuccess"));
+  }
+
 }
