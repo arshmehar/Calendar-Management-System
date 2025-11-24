@@ -309,8 +309,8 @@ public class CalendarImp implements Icalendar {
 
     newSeriesId = property.equals("start") ? null : oldSeriesId;
 
-    removeFromIndexes(original);
     Event updated = updateEvent(original, property, newValue, newSeriesId);
+    removeFromIndexes(original);
 
     EventKey key = new EventKey(updated.getSubject(), updated.getStart(), updated.getEnd());
 

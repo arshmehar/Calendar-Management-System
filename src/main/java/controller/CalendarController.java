@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import javax.swing.SwingUtilities;
+import model.Event;
 import model.Icalendar;
 import model.IcalendarSystem;
 import view.CalendarView;
@@ -246,15 +248,19 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
-        .subject(subject)
-        .startDateTime(start)
-        .endDateTime(end)
-        .weekdays(weekdays)
-        .occurrences(occurrences)
-        .build();
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_REPEATING_N_TIMES)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .weekdays(weekdays)
+          .occurrences(occurrences)
+          .build();
 
-    commandExecutor.executeCommand(cmd, currentCalendar);
+      commandExecutor.executeCommand(cmd, currentCalendar);
+    } catch (IllegalStateException e) {
+      view.displayError(e.getMessage());
+    }
     viewEventsOnDate(start.toLocalDate());
   }
 
@@ -268,15 +274,19 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       return;
     }
 
-    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
-        .subject(subject)
-        .startDateTime(start)
-        .endDateTime(end)
-        .weekdays(weekdays)
-        .seriesEndDate(endDate)
-        .build();
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SERIES_UNTIL)
+          .subject(subject)
+          .startDateTime(start)
+          .endDateTime(end)
+          .weekdays(weekdays)
+          .seriesEndDate(endDate)
+          .build();
 
-    commandExecutor.executeCommand(cmd, currentCalendar);
+      commandExecutor.executeCommand(cmd, currentCalendar);
+    } catch (IllegalStateException e) {
+      view.displayError(e.getMessage());
+    }
     viewEventsOnDate(start.toLocalDate());
   }
 
@@ -311,14 +321,18 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
-        .subject(subject)
-        .startDateTime(startDateTime)
-        .propertyToEdit(property)
-        .newPropertyValue(newValue)
-        .build();
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_EVENTS)
+          .subject(subject)
+          .startDateTime(startDateTime)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
 
-    commandExecutor.executeCommand(cmd, currentCalendar);
+      commandExecutor.executeCommand(cmd, currentCalendar);
+    } catch (IllegalStateException e) {
+      view.displayError(e.getMessage());
+    }
     viewEventsOnDate(startDateTime.toLocalDate());
   }
 
@@ -329,14 +343,18 @@ public class CalendarController implements IcalendarController, CalendarFeatures
       guiView.showError("No calendar selected");
       return;
     }
-    ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
-        .subject(subject)
-        .startDateTime(anyEventStart)
-        .propertyToEdit(property)
-        .newPropertyValue(newValue)
-        .build();
+    try {
+      ParsedCommand cmd = new ParsedCommand.Builder(CommandType.EDIT_SERIES)
+          .subject(subject)
+          .startDateTime(anyEventStart)
+          .propertyToEdit(property)
+          .newPropertyValue(newValue)
+          .build();
 
-    commandExecutor.executeCommand(cmd, currentCalendar);
+      commandExecutor.executeCommand(cmd, currentCalendar);
+    } catch (IllegalStateException e) {
+      view.displayError(e.getMessage());
+    }
     viewEventsOnDate(anyEventStart.toLocalDate());
   }
 
@@ -350,6 +368,10 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     }
 
     List<model.Event> events = currentCalendar.getEventsOn(date);
+    if (events != null && !events.isEmpty()) {
+      events = new java.util.ArrayList<>(events);
+      events.sort(Comparator.comparing(Event::getStart));
+    }
     if (guiView != null) {
       guiView.displayEvents(events, date);
     }
