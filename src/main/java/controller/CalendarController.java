@@ -28,8 +28,8 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   private final IcalendarSystem model;
   private final CommandParser commandParser;
-  private IcalendarView view;        // The generic interface used by Executor (and for text output)
-  private IcalendarGuiView guiView;   // The specific GUI implementation (only for GUI mode)
+  private IcalendarView view;
+  private IcalendarGuiView guiView;
   private Icalendar currentCalendar;
   private CommandExecutor commandExecutor;
 
@@ -44,7 +44,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     this.commandParser = new CommandParser();
   }
 
-  // ==================== MODE MANAGEMENT ====================
 
   @Override
   public void run(ApplicationMode mode, String commandFilePath) {
@@ -69,22 +68,17 @@ public class CalendarController implements IcalendarController, CalendarFeatures
    * Initializes components specific to the GUI mode and starts the Swing thread.
    */
   private void startGuiMode() {
-    // 1. Initialize GUI specific components
     this.guiView = new CalendarGuiView();
     this.guiView.setFeatures(this);
 
-    // 2. Wrap GUI in Adapter so generic Executor works
     this.view = new GuiViewAdapter(this.guiView);
 
-    // 3. Initialize default state
     createDefaultCalendar();
     updateCalendarList();
 
     SwingUtilities.invokeLater(guiView::display);
   }
 
-
-  // ==================== TEXT INPUT IMPLEMENTATION ====================
 
   @Override
   public void processCommand(String command) {
@@ -115,7 +109,6 @@ public class CalendarController implements IcalendarController, CalendarFeatures
     return this.view;
   }
 
-  // ==================== GUI FEATURES IMPLEMENTATION ====================
 
   /**
    * Creates a default calendar if none exists and sets it as the current context.
@@ -170,20 +163,17 @@ public class CalendarController implements IcalendarController, CalendarFeatures
           .newPropertyValue(newName)
           .build();
 
-      // Execution happens, throws exception on duplicate
       commandExecutor.executeCommand(cmd, currentCalendar);
 
-      // --- SUCCESS PATH (Only runs if execution succeeded) ---
       updateCalendarList();
       currentCalendar = model.getCalendar(newName);
 
     } catch (model.DuplicateCalendarException e) {
-      // Catch specific exception and show GUI error
+
       guiView.showError(
           "Calendar renaming failed: A calendar named '" + newName + "' already exists.");
 
     } catch (Exception e) {
-      // Catch other errors (CalendarNotFoundException, etc.)
       guiView.showError("Failed to rename calendar: " + e.getMessage());
     }
   }
@@ -210,7 +200,7 @@ public class CalendarController implements IcalendarController, CalendarFeatures
 
   @Override
   public void createSingleEvent(String subject, LocalDateTime start, LocalDateTime end) {
-    // The command executor handles the null currentCalendar check via IllegalStateException
+
     ParsedCommand cmd = new ParsedCommand.Builder(CommandType.CREATE_SINGLE_EVENT)
         .subject(subject)
         .startDateTime(start)

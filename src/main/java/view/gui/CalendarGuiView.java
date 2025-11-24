@@ -39,7 +39,6 @@ public class CalendarGuiView implements IcalendarGuiView {
   private final JFrame frame;
   private CalendarFeatures features;
 
-  // UI Components
   private JLabel monthLabel;
   private JPanel calendarGrid;
   private JTextArea eventDisplay;
@@ -50,12 +49,20 @@ public class CalendarGuiView implements IcalendarGuiView {
   private LocalDate selectedDate;
   private JPanel eventContainer;
 
+  private static final String[] AVAILABLE_TIMEZONES = {
+      "UTC", "America/New_York", "America/Chicago", "America/Denver",
+      "America/Los_Angeles", "America/Toronto",
+      "America/Sao_Paulo", "Europe/London", "Europe/Paris",
+      "Asia/Tokyo", "Asia/Hong_Kong",
+      "Asia/Dubai", "Asia/Kolkata", "Australia/Sydney"
+  };
+
   /**
    * Constructs the CalendarGuiView and initializes the main application frame
    * with the current month and date.
    */
   public CalendarGuiView() {
-    // Apply System Look and Feel for a modern native appearance
+
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     } catch (Exception e) {
@@ -67,7 +74,7 @@ public class CalendarGuiView implements IcalendarGuiView {
 
     frame = new JFrame("Calendar Application");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setSize(1000, 750); // Slightly larger default size
+    frame.setSize(1000, 750);
     frame.setLocationRelativeTo(null);
 
     setupUi();
@@ -86,19 +93,16 @@ public class CalendarGuiView implements IcalendarGuiView {
    * Sets up the main UI layout, including the top panel, calendar grid, and right panel.
    */
   private void setupUi() {
-    frame.setLayout(new BorderLayout(0, 0)); // Removing default gaps
+    frame.setLayout(new BorderLayout(0, 0));
     frame.getContentPane().setBackground(Color.WHITE);
 
-    // Top panel
     frame.add(createTopPanel(), BorderLayout.NORTH);
 
-    // Center - calendar grid
-    calendarGrid = new JPanel(new GridLayout(0, 7, 0, 0)); // Remove gap for flat look
+    calendarGrid = new JPanel(new GridLayout(0, 7, 0, 0));
     calendarGrid.setBackground(Color.WHITE);
-    calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 10)); // Add padding
+    calendarGrid.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 10));
     frame.add(calendarGrid, BorderLayout.CENTER);
 
-    // Right panel
     frame.add(createRightPanel(), BorderLayout.EAST);
 
     updateMonthLabel();
@@ -115,24 +119,20 @@ public class CalendarGuiView implements IcalendarGuiView {
     topContainer.setBackground(Color.WHITE);
     topContainer.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
 
-    // =================================================================
-    // LEFT SIDE: Vertical Stack (Tools on top, Timezone below)
-    // =================================================================
     JPanel mainLeftPanel = new JPanel();
     mainLeftPanel.setLayout(new BoxLayout(mainLeftPanel, BoxLayout.Y_AXIS));
     mainLeftPanel.setBackground(Color.WHITE);
 
-    // 1. Tools Panel (Calendar Selector + Buttons)
     JPanel toolsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
     toolsPanel.setBackground(Color.WHITE);
-    toolsPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align to left edge of box layout
+    toolsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     JLabel calLabel = new JLabel("Calendar:");
-    calLabel.setFont(new Font("SansSerif", Font.PLAIN, 16)); // Increased Font
+    calLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
     toolsPanel.add(calLabel);
 
     calendarSelector = new JComboBox<>();
-    calendarSelector.setFont(new Font("SansSerif", Font.PLAIN, 14)); // Increased Font
+    calendarSelector.setFont(new Font("SansSerif", Font.PLAIN, 14));
     calendarSelector.addActionListener(e -> {
       if (features != null && calendarSelector.getSelectedItem() != null) {
         String selected = (String) calendarSelector.getSelectedItem();
@@ -141,7 +141,6 @@ public class CalendarGuiView implements IcalendarGuiView {
     });
     toolsPanel.add(calendarSelector);
 
-    // Renamed buttons and increased font
     JButton editCalButton = new JButton("Edit Calendar");
     editCalButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
     editCalButton.setFocusPainted(false);
@@ -157,7 +156,6 @@ public class CalendarGuiView implements IcalendarGuiView {
     mainLeftPanel.add(toolsPanel);
     mainLeftPanel.add(Box.createVerticalStrut(20));
 
-    // 2. Timezone Panel (Below tools)
     JPanel tzPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
     tzPanel.setBackground(Color.WHITE);
     tzPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -169,12 +167,8 @@ public class CalendarGuiView implements IcalendarGuiView {
 
     mainLeftPanel.add(tzPanel);
 
-    // Add the combined stack to the WEST
     topContainer.add(mainLeftPanel, BorderLayout.WEST);
 
-    // =================================================================
-    // CENTER: Navigation
-    // =================================================================
     JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
     navPanel.setOpaque(false);
 
@@ -214,23 +208,20 @@ public class CalendarGuiView implements IcalendarGuiView {
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 20, 20));
     rightPanel.setPreferredSize(new Dimension(320, 0));
 
-    // Header
     JLabel eventLabel = new JLabel("Events");
     eventLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
     rightPanel.add(eventLabel, BorderLayout.NORTH);
 
-    // Scrollable event container
     eventContainer = new JPanel();
     eventContainer.setLayout(new BoxLayout(eventContainer, BoxLayout.Y_AXIS));
-    eventContainer.setBackground(new Color(250, 250, 250)); // Very light gray background
+    eventContainer.setBackground(new Color(250, 250, 250));
 
     JScrollPane scrollPane = new JScrollPane(eventContainer);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
     rightPanel.add(scrollPane, BorderLayout.CENTER);
 
-    // Action buttons
-    JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 8)); // increased gap
+    JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 5, 8));
     buttonPanel.setBackground(Color.WHITE);
 
     Font buttonFont = new Font("SansSerif", Font.BOLD, 14);
@@ -264,7 +255,6 @@ public class CalendarGuiView implements IcalendarGuiView {
   private void buildCalendar() {
     calendarGrid.removeAll();
 
-    // Day headers - Mon to Sun
     String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
     for (String day : days) {
       JLabel label = new JLabel(day, SwingConstants.CENTER);
@@ -275,10 +265,9 @@ public class CalendarGuiView implements IcalendarGuiView {
     }
 
     LocalDate firstDay = currentMonth.atDay(1);
-    // Adjust start day to match Mon-Sun (Mon=1 becomes 0, Sun=7 becomes 6)
+
     int startDayOfWeek = firstDay.getDayOfWeek().getValue() - 1;
 
-    // Add empty slots before start of month
     for (int i = 0; i < startDayOfWeek; i++) {
       JPanel empty = new JPanel();
       empty.setBackground(Color.WHITE);
@@ -291,28 +280,24 @@ public class CalendarGuiView implements IcalendarGuiView {
       LocalDate date = currentMonth.atDay(day);
       JButton dayButton = new JButton(String.valueOf(day));
 
-      // Modern styling
       dayButton.setOpaque(true);
       dayButton.setContentAreaFilled(true);
       dayButton.setFocusPainted(false);
       dayButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-      // Default: White with thin gray border
       dayButton.setBackground(Color.WHITE);
       dayButton.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
 
       boolean isToday = date.equals(LocalDate.now());
       boolean isSelected = date.equals(selectedDate);
 
-      // Today: Soft yellow background
       if (isToday) {
-        dayButton.setBackground(new Color(255, 249, 196)); // Light Yellow
+        dayButton.setBackground(new Color(255, 249, 196));
         dayButton.setFont(new Font("SansSerif", Font.BOLD, 14));
       }
 
-      // Selected: Soft blue background and border
       if (isSelected) {
-        dayButton.setBackground(new Color(225, 245, 254)); // Light Blue
+        dayButton.setBackground(new Color(225, 245, 254));
         dayButton.setBorder(BorderFactory.createLineBorder(new Color(129, 212, 250), 2));
       }
 
@@ -320,8 +305,6 @@ public class CalendarGuiView implements IcalendarGuiView {
       calendarGrid.add(dayButton);
     }
 
-
-    // Add trailing empty slots to maintain fixed grid size (6 rows * 7 cols = 42 cells)
     int cellsFilled = startDayOfWeek + daysInMonth;
     int totalCells = 42;
     for (int i = cellsFilled; i < totalCells; i++) {
@@ -380,7 +363,6 @@ public class CalendarGuiView implements IcalendarGuiView {
     monthLabel.setText(currentMonth.format(formatter));
   }
 
-  // ==================== DIALOG METHODS ====================
 
   /**
    * Displays the dialog for creating a new calendar.
@@ -395,11 +377,9 @@ public class CalendarGuiView implements IcalendarGuiView {
       return;
     }
 
-    String[] timezones = {"America/New_York", "America/Los_Angeles", "America/Chicago",
-        "Europe/London", "Europe/Paris", "Asia/Tokyo", "Asia/Kolkata"};
     String timezone = (String) JOptionPane.showInputDialog(frame,
         "Select timezone:", "Timezone", JOptionPane.QUESTION_MESSAGE,
-        null, timezones, timezones[0]);
+        null, AVAILABLE_TIMEZONES, AVAILABLE_TIMEZONES[0]);
 
     if (timezone != null) {
       features.createCalendar(name.trim(), timezone);
@@ -481,7 +461,7 @@ public class CalendarGuiView implements IcalendarGuiView {
 
     features.editSingleEvent(
         eventName.trim(),
-        selectedDate.atTime(10, 0), // Placeholder
+        selectedDate.atTime(10, 0),
         selectedDate.atTime(11, 0),
         property,
         newValue.trim()
@@ -510,13 +490,12 @@ public class CalendarGuiView implements IcalendarGuiView {
     if (choice == 0 || choice == 1) {
       JFileChooser fileChooser = new JFileChooser();
 
-      // 1. Configure the Filter based on selection
       if (choice == 0) {
-        // CSV Selection
+
         FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files (*.csv)", "csv");
         fileChooser.setFileFilter(filter);
       } else {
-        // iCal Selection (Standard extension is .ics)
+
         FileNameExtensionFilter filter = new FileNameExtensionFilter("iCal Files (*.ical)", "ical");
         fileChooser.setFileFilter(filter);
       }
@@ -525,14 +504,13 @@ public class CalendarGuiView implements IcalendarGuiView {
         File file = fileChooser.getSelectedFile();
         String filePath = file.getAbsolutePath();
 
-        // 2. Enforce the extension if the user didn't type it
         if (choice == 0) {
           if (!filePath.toLowerCase().endsWith(".csv")) {
             filePath += ".csv";
           }
           features.exportToCsv(filePath);
         } else {
-          // Standard iCal extension is .ics
+
           if (!filePath.toLowerCase().endsWith(".ical")) {
             filePath += ".ical";
           }
@@ -542,7 +520,6 @@ public class CalendarGuiView implements IcalendarGuiView {
     }
   }
 
-  // ==================== PUBLIC UPDATE METHODS ====================
 
   /**
    * Sets the names of the available calendars in the selector dropdown.
@@ -584,7 +561,6 @@ public class CalendarGuiView implements IcalendarGuiView {
       for (Event event : events) {
         EventPanel eventPanel = new EventPanel(event, date, features);
 
-        // Wrap for spacing
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
         wrapper.setBorder(BorderFactory.createEmptyBorder(0, 5, 8, 5));
@@ -658,24 +634,22 @@ public class CalendarGuiView implements IcalendarGuiView {
         options[0]
     );
 
-    if (choice == 0) { // Rename
+    if (choice == 0) {
       String newName = JOptionPane.showInputDialog(frame,
           "Enter the new name for the calendar:", currentCalendarName);
 
       if (newName != null && !newName.trim().isEmpty()
           && !newName.trim().equals(currentCalendarName)) {
         features.editCalendarName(currentCalendarName, newName.trim());
-        // Controller will handle success/error messages and list updates
+
       }
-    } else if (choice == 1) { // Change Timezone
-      String[] timezones = {"America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Kolkata"};
+    } else if (choice == 1) {
       String newTimezone = (String) JOptionPane.showInputDialog(frame,
           "Select the new timezone:", "Change Timezone", JOptionPane.QUESTION_MESSAGE,
-          null, timezones, timezones[0]);
+          null, AVAILABLE_TIMEZONES, AVAILABLE_TIMEZONES[0]);
 
       if (newTimezone != null) {
         features.editCalendarTimezone(currentCalendarName, newTimezone);
-        // Controller will handle success/error messages
       }
     }
   }

@@ -39,14 +39,12 @@ public class EventCreationDialog extends JDialog {
   private final boolean recurringMode;
   private boolean confirmed = false;
 
-  // Basic fields
   private JTextField subjectField;
   private JSpinner startHourSpinner;
   private JSpinner startMinuteSpinner;
   private JSpinner endHourSpinner;
   private JSpinner endMinuteSpinner;
 
-  // Recurring fields
   private JCheckBox[] weekdayCheckboxes;
   private JRadioButton occurrencesRadio;
   private JRadioButton untilDateRadio;
@@ -65,7 +63,7 @@ public class EventCreationDialog extends JDialog {
     this.selectedDate = date;
     this.recurringMode = showRecurringOptions;
 
-    setSize(500, showRecurringOptions ? 520 : 300); // Increased height for better spacing
+    setSize(500, showRecurringOptions ? 520 : 300);
     setLocationRelativeTo(parent);
     setResizable(false);
 
@@ -77,17 +75,14 @@ public class EventCreationDialog extends JDialog {
    */
   private void initComponents() {
     JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25)); // Padding
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
 
-    // Basic event fields
     mainPanel.add(createBasicFieldsPanel(), BorderLayout.NORTH);
 
-    // Recurring options (if enabled)
     if (recurringMode) {
       mainPanel.add(createRecurringPanel(), BorderLayout.CENTER);
     }
 
-    // Buttons
     mainPanel.add(createButtonPanel(), BorderLayout.SOUTH);
 
     add(mainPanel);
@@ -100,14 +95,12 @@ public class EventCreationDialog extends JDialog {
    * @return A JPanel containing the basic event input fields.
    */
   private JPanel createBasicFieldsPanel() {
-    JPanel panel = new JPanel(new GridLayout(3, 2, 10, 15)); // Increased vertical gap
+    JPanel panel = new JPanel(new GridLayout(3, 2, 10, 15));
 
-    // Subject
     panel.add(new JLabel("Event Name:"));
     subjectField = new JTextField();
     panel.add(subjectField);
 
-    // Start time
     panel.add(new JLabel("Start Time (HH:MM):"));
     JPanel startPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     startHourSpinner = new JSpinner(new SpinnerNumberModel(9, 0, 23, 1));
@@ -117,7 +110,6 @@ public class EventCreationDialog extends JDialog {
     startPanel.add(startMinuteSpinner);
     panel.add(startPanel);
 
-    // End time
     panel.add(new JLabel("End Time (HH:MM):"));
     JPanel endPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     endHourSpinner = new JSpinner(new SpinnerNumberModel(10, 0, 23, 1));
@@ -141,7 +133,6 @@ public class EventCreationDialog extends JDialog {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setBorder(BorderFactory.createTitledBorder("Recurrence Options"));
 
-    // Days of week
     JPanel daysPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     daysPanel.add(new JLabel("Repeat on:"));
 
@@ -156,12 +147,10 @@ public class EventCreationDialog extends JDialog {
     panel.add(daysPanel);
     panel.add(Box.createVerticalStrut(10));
 
-    // End condition
     JPanel endConditionPanel = new JPanel();
     endConditionPanel.setLayout(new BoxLayout(endConditionPanel, BoxLayout.Y_AXIS));
     ButtonGroup group = new ButtonGroup();
 
-    // Occurrences option
     occurrencesRadio = new JRadioButton("Ends after:");
     occurrencesRadio.setSelected(true);
     group.add(occurrencesRadio);
@@ -174,7 +163,6 @@ public class EventCreationDialog extends JDialog {
     occPanel.add(new JLabel("occurrences"));
     endConditionPanel.add(occPanel);
 
-    // Until date option
     JPanel untilPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     untilDateRadio = new JRadioButton("Ends by:");
     group.add(untilDateRadio);
@@ -185,7 +173,6 @@ public class EventCreationDialog extends JDialog {
     JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(untilDateSpinner, "MM/dd/yyyy");
     untilDateSpinner.setEditor(dateEditor);
 
-    // Set to 1 month from now
     Calendar cal = Calendar.getInstance();
     cal.add(Calendar.MONTH, 1);
     untilDateSpinner.setValue(cal.getTime());
@@ -247,7 +234,7 @@ public class EventCreationDialog extends JDialog {
    * @return true if all input is valid, false otherwise (displays JOptionPane error).
    */
   private boolean validation() {
-    // Validate subject
+
     if (subjectField.getText().trim().isEmpty()) {
       JOptionPane.showMessageDialog(this,
           "Please enter an event name",
@@ -257,7 +244,6 @@ public class EventCreationDialog extends JDialog {
       return false;
     }
 
-    // Validate times
     int startHour = (int) startHourSpinner.getValue();
     int startMinute = (int) startMinuteSpinner.getValue();
     int endHour = (int) endHourSpinner.getValue();
@@ -275,7 +261,6 @@ public class EventCreationDialog extends JDialog {
       return false;
     }
 
-    // Validate recurring options
     if (recurringMode) {
       boolean anyDaySelected = false;
       for (JCheckBox checkbox : weekdayCheckboxes) {
@@ -297,7 +282,6 @@ public class EventCreationDialog extends JDialog {
     return true;
   }
 
-  // Getters
 
   /**
    * Checks if the user confirmed the action by clicking the Create button.

@@ -480,7 +480,7 @@ public class EventTests {
         .build();
 
     assertEquals(event1, event2);
-    assertEquals(event2, event1); // Symmetric
+    assertEquals(event2, event1);
   }
 
   /**
@@ -508,7 +508,7 @@ public class EventTests {
 
     assertEquals(event1, event2);
     assertEquals(event2, event3);
-    assertEquals(event1, event3); // Transitive
+    assertEquals(event1, event3);
   }
 
   /**
