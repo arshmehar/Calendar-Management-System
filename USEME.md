@@ -4,8 +4,9 @@
 
 This Calendar Application can run in two modes:
 
-1. **Interactive mode** - Allows users to enter commands directly in the console
-2. **Headless mode** - Reads commands from a text file and executes them automatically
+1. **Interactive mode** - Allows users to enter commands directly in the console.
+2. **Headless mode** - Reads commands from a text file and executes them automatically.
+3. **GUI mode** - Allows user to interact with a graphical user interface based on Java swing. User can perform calendar operations using the visual interface.
 
 ---
 
@@ -58,6 +59,13 @@ create event Meeting from 2025-10-31T10:00 to 2025-10-31T11:00
 create event Lunch from 2025-10-31T13:00 to 2025-10-31T14:00
 print events on 2025-10-31
 exit
+```
+
+### 3. GUI Mode
+
+In this mode, the application launches a Java Swing GUI which the user can interact with using buttons and text fields visually. It launches when no arguments are given.
+```bash
+java -jar build/libs/calendar-1.0.jar
 ```
 
 ---
@@ -132,8 +140,57 @@ Calendar exported successfully
 File saved at: /absolute/path/to/calendar.csv
 ```
 
+
+## GUI User Guide
+
+### Calendar Management
+* **Create a New Calendar**: Click the **New Calendar** button in the top-left toolbar. Enter a unique name and select a timezone from the provided list.
+![img.png](res/img.png)
+![img_1.png](res/img_1.png)
+* **Switch Calendars**: Use the **Calendar** dropdown menu in the top-left to toggle between different calendars.
+
+* ![img_2.png](res/img_2.png)
+* **Edit Calendar**: Select a calendar from the dropdown, then click the **Edit Calendar** button. You can:
+    * **Rename**: Change the display name of the current calendar.
+    * **Change Timezone**: Update the timezone for the entire calendar.
+  ![img_3.png](res/img_3.png)
+
+### Navigation
+* **Change Month**: Click the **◀** (Previous) or **▶** (Next) arrows in the top center to navigate between months.
+* **Jump to Today**: Click the **Today** button to immediately focus the view on the current system date.
+* **Select a Day**: Click any cell in the calendar grid. The selected day will be highlighted in blue, and the side panel will update to show that day's events.
+
+### Event Operations
+* **Create a Single Event**:
+    1.  Select a date on the grid.
+    2.  Click **Create Event** on the right-hand panel.
+    3.  Enter the Event Name, Start Time, and End Time.
+  ![img_4.png](res/img_4.png)
+* **Create a Recurring Series**:
+    1.  Select the start date on the grid.
+    2.  Click **Create Recurring Series** on the right-hand panel.
+    3.  Check the boxes for the days of the week the event repeats (e.g., Mon, Wed).
+    4.  Select an end condition: either **Ends after [X] occurrences** or **Ends by [Date]**.
+  ![img_5.png](res/img_5.png)
+* **View Events**: Events for the selected date are displayed in the right-hand panel, sorted chronologically from earliest to latest.
+![img_6.png](res/img_6.png)
+* **Edit an Event**:
+    1.  Find the event card in the list.
+    2.  Click the **Edit** button on the card.
+  ![img_7.png](res/img_7.png)
+    3.  *(For Recurring Events)* Select the scope: **This Event Only**, **This and Future**, or **All in Series**.
+  ![img_8.png](res/img_8.png)
+    4.  Select the property to change (e.g., Subject, Start Time, Status) and enter the new value.
+
+### Data Export
+* **Export Calendar**: Click the **Export Calendar** button at the bottom right.
+    * Select **CSV** to save the current calendar as a Comma-Separated Values file.
+    * Select **iCal** to save as a standard `.ics` calendar file.
+  ![img_9.png](res/img_9.png)
+
+
 ## Design Changes Documentation
-The design changes and improvements are documented in the DesignChanges.md file
+The design changes and improvements are documented in the Misc.md file
 in the res folder. 
 
 ---
