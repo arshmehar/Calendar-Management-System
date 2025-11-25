@@ -144,11 +144,25 @@ public class CalendarImp implements Icalendar {
     }
   }
 
+  /**
+   * Helper method to update the indexes.
+   *
+   * @param oldEvent old event to be removed.
+   * @param newEvent to be added.
+   * @throws DuplicateEventException duplicate event exception thrown if duplicate.
+   */
   private void updateIndexes(Event oldEvent, Event newEvent) throws DuplicateEventException {
     removeFromIndexes(oldEvent);
     addToIndexes(newEvent);
   }
 
+  /**
+   * Implementation of adding the passed event to this calendar.
+   *
+   * @param event passed event object.
+   * @param start start date time.
+   * @param end   end date time.
+   */
   void copyEventToCalendar(Event event, LocalDateTime start, LocalDateTime end) {
 
     Event copiedEvent = Event.getBuilderFrom(event)
