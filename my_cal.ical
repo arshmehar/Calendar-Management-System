@@ -1,1 +1,5 @@
-Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Calendar Application//EN
+CALSCALE:GREGORIAN
+END:VCALENDAR

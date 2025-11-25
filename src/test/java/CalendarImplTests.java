@@ -798,12 +798,8 @@ public class CalendarImplTests {
   }
 
   @Test
-  public void testEditAllInSeries_ShiftStartTime() throws Exception {
+  public void testEditAllInSeriesShiftStartTime() throws Exception {
 
-    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
-    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
-    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);   // Oct 1st, 11 AM
-    LocalDateTime newStart = LocalDateTime.of(2023, 10, 1, 10, 0);
 
     Set<DayOfWeekAlphabet> days = new HashSet<>();
     days.add(DayOfWeekAlphabet.U);
@@ -812,6 +808,10 @@ public class CalendarImplTests {
     days.add(DayOfWeekAlphabet.W);
     days.add(DayOfWeekAlphabet.R);
 
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+    LocalDateTime newStart = LocalDateTime.of(2023, 10, 1, 10, 0);
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
     calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
 
     calendar.editAllInSeries("Meeting", seriesStart, "start", newStart.toString());
@@ -825,10 +825,7 @@ public class CalendarImplTests {
   }
 
   @Test
-  public void testEditAllInSeries_ShiftEndTime() throws Exception {
-    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
-    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
-    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+  public void testEditAllInSeriesShiftEndTime() throws Exception {
 
     Set<DayOfWeekAlphabet> days = new HashSet<>();
     days.add(DayOfWeekAlphabet.U);
@@ -837,6 +834,9 @@ public class CalendarImplTests {
     days.add(DayOfWeekAlphabet.W);
     days.add(DayOfWeekAlphabet.R);
 
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
     calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
 
     LocalDateTime newEnd = LocalDateTime.of(2023, 10, 1, 12, 0);
@@ -848,11 +848,8 @@ public class CalendarImplTests {
   }
 
   @Test
-  public void testEditEventsFromDate_ChangeLocation() throws Exception {
+  public void testEditEventsFromDateChangeLocation() throws Exception {
 
-    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
-    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
-    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
 
     Set<DayOfWeekAlphabet> days = new HashSet<>();
     days.add(DayOfWeekAlphabet.U);
@@ -861,6 +858,9 @@ public class CalendarImplTests {
     days.add(DayOfWeekAlphabet.W);
     days.add(DayOfWeekAlphabet.R);
 
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
     calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
     LocalDateTime startFrom = LocalDateTime.of(2023, 10, 3, 9, 0);
     calendar.editEventsFromDate("Meeting", startFrom, "location", "Room B");
@@ -876,11 +876,7 @@ public class CalendarImplTests {
   }
 
   @Test
-  public void testEditEventsFromDate_ShiftSeriesForward() throws Exception {
-
-    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
-    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
-    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+  public void testEditEventsFromDateShiftSeriesForward() throws Exception {
 
     Set<DayOfWeekAlphabet> days = new HashSet<>();
     days.add(DayOfWeekAlphabet.U);
@@ -888,7 +884,10 @@ public class CalendarImplTests {
     days.add(DayOfWeekAlphabet.T);
     days.add(DayOfWeekAlphabet.W);
     days.add(DayOfWeekAlphabet.R);
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
 
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
     calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
     LocalDateTime pivotEventStart = LocalDateTime.of(2023, 10, 3, 9, 0);
     LocalDateTime newStart = LocalDateTime.of(2023, 10, 3, 11, 0); // +2 Hours
@@ -908,11 +907,7 @@ public class CalendarImplTests {
 
 
   @Test
-  public void testEditEventsFromDate_ShiftSeriesEndDate() throws Exception {
-
-    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
-    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
-    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+  public void testEditEventsFromDateShiftSeriesEndDate() throws Exception {
 
     Set<DayOfWeekAlphabet> days = new HashSet<>();
     days.add(DayOfWeekAlphabet.U);
@@ -921,6 +916,10 @@ public class CalendarImplTests {
     days.add(DayOfWeekAlphabet.W);
     days.add(DayOfWeekAlphabet.R);
 
+    LocalDateTime seriesStart = LocalDateTime.of(2023, 10, 1, 9, 0);
+    LocalDateTime seriesEnd = LocalDateTime.of(2023, 10, 1, 11, 0);
+
+    CalendarImp calendar = new CalendarImp("Test Calendar", ZoneId.of("America/New_York"));
     calendar.addEventSeriesOccurrences("Meeting", seriesStart, seriesEnd, 5, days);
 
     LocalDateTime pivotEventStart = LocalDateTime.of(2023, 10, 3, 9, 0);
