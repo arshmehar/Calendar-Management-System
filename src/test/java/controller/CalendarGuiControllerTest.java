@@ -50,15 +50,9 @@ public class CalendarGuiControllerTest {
     mockGuiView = new MockIcalendarGuiView(guiLog);
 
     controller = new CalendarController(mockSystem, mockTextView, mockGuiView);
-
     controller.currentCalendar = mockCalendar;
-
-    // CREATE TestCal first
     controller.createCalendar("TestCal", "America/New_York");
     controller.selectCalendar("TestCal");
-
-    // Set currentCalendar directly for testing
-
     systemLog.setLength(0);
     calendarLog.setLength(0);
     textViewLog.setLength(0);
@@ -73,12 +67,8 @@ public class CalendarGuiControllerTest {
   public void testCreateSingleEvent() {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
-
     controller.createSingleEvent("Meeting", start, end);
-
-    // Verify controller called the calendar
     assertTrue(calendarLog.toString().contains("addEvent: Meeting"));
-    // Verify controller refreshed the view
     assertTrue(guiLog.toString().contains("displayEvents: date=2025-01-15"));
   }
 
@@ -90,14 +80,11 @@ public class CalendarGuiControllerTest {
   public void testCreateCalendar() {
     systemLog.setLength(0);
     guiLog.setLength(0);
-
     controller.createCalendar("NewCal", "UTC");
 
-    // Verify controller called model
     assertTrue(systemLog.toString().contains("createCalendar"));
     assertTrue(systemLog.toString().contains("name=NewCal"));
     assertTrue(systemLog.toString().contains("timezone=UTC"));
-    // Verify controller updated view
     assertTrue(guiLog.toString().contains("setCalendarNames"));
   }
 
@@ -109,13 +96,8 @@ public class CalendarGuiControllerTest {
   public void testSelectCalendar() {
     systemLog.setLength(0);
     guiLog.setLength(0);
-
-    // Just select the existing TestCal
     controller.selectCalendar("TestCal");
-
-    // Verify controller asked model for calendar
     assertTrue(systemLog.toString().contains("getCalendar: TestCal"));
-    // Verify controller updated GUI
     assertTrue(guiLog.toString().contains("setSelectedCalendar: TestCal"));
     assertTrue(guiLog.toString().contains("updateTimezoneDisplay: America/New_York"));
   }
@@ -127,12 +109,9 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditCalendarName() {
     controller.editCalendarName("TestCal", "NewCalName");
-
-    // Verify controller called model to rename
     assertTrue(systemLog.toString().contains("renameCalendar"));
     assertTrue(systemLog.toString().contains("oldName=TestCal"));
     assertTrue(systemLog.toString().contains("newName=NewCalName"));
-    // Verify controller refreshed GUI list
     assertTrue(guiLog.toString().contains("setCalendarNames"));
   }
 
@@ -143,12 +122,9 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditCalendarTimezone() {
     controller.editCalendarTimezone("TestCal", "UTC");
-
-    // Verify controller called model
     assertTrue(systemLog.toString().contains("changeTimezone"));
     assertTrue(systemLog.toString().contains("calendar=TestCal"));
     assertTrue(systemLog.toString().contains("timezone=UTC"));
-    // Verify controller updated GUI
     assertTrue(guiLog.toString().contains("updateTimezoneDisplay: UTC"));
   }
 
@@ -163,13 +139,9 @@ public class CalendarGuiControllerTest {
     Set<DayOfWeekAlphabet> weekdays = new HashSet<>();
     weekdays.add(DayOfWeekAlphabet.M);
     weekdays.add(DayOfWeekAlphabet.W);
-
     controller.createRecurringEventWithOccurrences("Weekly Meeting", start, end, weekdays, 5);
-
-    // Verify controller called calendar
     assertTrue(calendarLog.toString().contains("addEventSeriesOccurrences"));
     assertTrue(calendarLog.toString().contains("Weekly Meeting"));
-    // Verify controller refreshed view
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
 
@@ -185,13 +157,9 @@ public class CalendarGuiControllerTest {
     weekdays.add(DayOfWeekAlphabet.M);
     weekdays.add(DayOfWeekAlphabet.F);
     LocalDate endDate = LocalDate.of(2025, 3, 1);
-
     controller.createRecurringEventUntilDate("Standup", start, end, weekdays, endDate);
-
-    // Verify controller called calendar
     assertTrue(calendarLog.toString().contains("addEventSeriesUntil"));
     assertTrue(calendarLog.toString().contains("Standup"));
-    // Verify controller refreshed view
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
 
@@ -203,12 +171,8 @@ public class CalendarGuiControllerTest {
   public void testEditSingleEvent() {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
-
     controller.editSingleEvent("Meeting", start, end, "subject", "Updated Meeting");
-
-    // Verify controller called calendar
     assertTrue(calendarLog.toString().contains("editEvent"));
-    // Verify controller refreshed view
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
 
@@ -219,12 +183,8 @@ public class CalendarGuiControllerTest {
   @Test
   public void testViewEventsOnDate() {
     LocalDate date = LocalDate.of(2025, 1, 15);
-
     controller.viewEventsOnDate(date);
-
-    // Verify controller asked calendar for events
     assertTrue(calendarLog.toString().contains("getEventsOn: 2025-01-15"));
-    // Verify controller told GUI to display them
     assertTrue(guiLog.toString().contains("displayEvents: date=2025-01-15"));
   }
 
@@ -235,10 +195,7 @@ public class CalendarGuiControllerTest {
   public void testSelectCalendarNotFound() {
     mockSystem.setShouldThrowNotFound(true);
     guiLog.setLength(0);
-
     controller.selectCalendar("NonExistent");
-
-    // Verify GUI showed error
     assertTrue(guiLog.toString().contains("showError"));
 
   }
@@ -247,9 +204,7 @@ public class CalendarGuiControllerTest {
   public void testEditCalendarNameDuplicate() {
     mockSystem.setShouldThrowDuplicate(true);
     guiLog.setLength(0);
-
     controller.editCalendarName("TestCal", "ExistingName");
-
     assertTrue(guiLog.toString().contains("showError"));
 
   }
@@ -260,9 +215,7 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditEventsFromDate() {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
-
     controller.editEventsFromDate("Meeting", start, "location", "Room B");
-
     assertTrue(calendarLog.toString().contains("editEventsFromDate"));
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
@@ -273,9 +226,7 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditAllInSeries() {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
-
     controller.editAllInSeries("Weekly Meeting", start, "subject", "Team Standup");
-
     assertTrue(calendarLog.toString().contains("editAllInSeries"));
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
@@ -286,9 +237,7 @@ public class CalendarGuiControllerTest {
   @Test
   public void testViewEventsFromDate() {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
-
     controller.viewEventsFromDate(start);
-
     assertTrue(calendarLog.toString().contains("getEventsBetween"));
   }
 
@@ -299,7 +248,6 @@ public class CalendarGuiControllerTest {
   @Test
   public void testExportToCsv() {
     controller.exportToCsv("calendar.csv");
-
     assertTrue(calendarLog.toString().contains("getAllEvents"));
   }
 
@@ -309,7 +257,6 @@ public class CalendarGuiControllerTest {
   @Test
   public void testExportToIcal() {
     controller.exportToIcal("calendar.ics");
-
     assertTrue(calendarLog.toString().contains("getAllEvents"));
   }
 
@@ -319,12 +266,9 @@ public class CalendarGuiControllerTest {
   @Test
   public void testCreateEventDuplicate() {
     mockCalendar.setShouldThrowDuplicate(true);
-
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     controller.createSingleEvent("Meeting", start, end);
-
-    // Should still try to create and handle error gracefully
     assertTrue(calendarLog.toString().contains("addEvent"));
   }
 
@@ -334,11 +278,9 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditEventNotFound() {
     mockCalendar.setShouldThrowNotFound(true);
-
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     controller.editSingleEvent("NonExistent", start, end, "subject", "New");
-
     assertTrue(calendarLog.toString().contains("editEvent"));
   }
 
@@ -348,13 +290,11 @@ public class CalendarGuiControllerTest {
   @Test
   public void testCreateRecurringEventDuplicate() {
     mockCalendar.setShouldThrowDuplicate(true);
-
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     Set<DayOfWeekAlphabet> weekdays = new HashSet<>();
     weekdays.add(DayOfWeekAlphabet.M);
     weekdays.add(DayOfWeekAlphabet.W);
-
     controller.createRecurringEventWithOccurrences("Meeting", start, end, weekdays, 5);
     assertTrue(calendarLog.toString().contains("addEventSeriesOccurrences"));
   }
@@ -365,7 +305,6 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditEventsFromDateNotFound() {
     mockCalendar.setShouldThrowNotFound(true);
-
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     controller.editEventsFromDate("NonExistent", start, "location", "Room B");
 
@@ -378,11 +317,8 @@ public class CalendarGuiControllerTest {
   @Test
   public void testEditAllInSeriesNotFound() {
     mockCalendar.setShouldThrowNotFound(true);
-
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     controller.editAllInSeries("NonExistent", start, "subject", "New");
-
-    // Verify controller attempted to edit series
     assertTrue(calendarLog.toString().contains("editAllInSeries"));
   }
 
@@ -395,10 +331,7 @@ public class CalendarGuiControllerTest {
     guiLog.setLength(0);
 
     controller.viewEventsOnDate(date);
-
-    // Verify controller queried calendar
     assertTrue(calendarLog.toString().contains("getEventsOn: 2025-12-25"));
-    // Verify controller told GUI to display (even if empty)
     assertTrue(guiLog.toString().contains("displayEvents: date=2025-12-25"));
   }
 
@@ -409,14 +342,9 @@ public class CalendarGuiControllerTest {
   public void selectCalendarRefreshEvents() {
     systemLog.setLength(0);
     guiLog.setLength(0);
-
     controller.selectCalendar("TestCal");
-
-    // Verify controller updated GUI components
     assertTrue(guiLog.toString().contains("setSelectedCalendar: TestCal"));
     assertTrue(guiLog.toString().contains("updateTimezoneDisplay"));
-
-    // Verify controller also refreshed events display
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
 
@@ -429,10 +357,8 @@ public class CalendarGuiControllerTest {
 
     controller.editCalendarTimezone("TestCal", "Europe/London");
 
-    // Verify controller updated timezone display
     assertTrue(guiLog.toString().contains("updateTimezoneDisplay: Europe/London"));
 
-    // Verify controller refreshed events (times affected by timezone change)
     assertTrue(guiLog.toString().contains("displayEvents"));
   }
 
@@ -451,7 +377,6 @@ public class CalendarGuiControllerTest {
 
     controller.createRecurringEventUntilDate("Meeting", start, end, weekdays, endDate);
 
-    // Verify controller attempted to create series
     assertTrue(calendarLog.toString().contains("addEventSeriesUntil"));
   }
 
@@ -466,7 +391,6 @@ public class CalendarGuiControllerTest {
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     controller.editSingleEvent("Meeting", start, end, "subject", "ExistingName");
 
-    // Verify controller attempted to edit
     assertTrue(calendarLog.toString().contains("editEvent"));
   }
 
@@ -480,7 +404,6 @@ public class CalendarGuiControllerTest {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     controller.editEventsFromDate("Meeting", start, "subject", "ExistingName");
 
-    // Verify controller attempted to edit
     assertTrue(calendarLog.toString().contains("editEventsFromDate"));
   }
 
@@ -492,7 +415,6 @@ public class CalendarGuiControllerTest {
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     controller.editAllInSeries("Meeting", start, "subject", "ExistingName");
 
-    // Verify controller attempted to edit series
     assertTrue(calendarLog.toString().contains("editAllInSeries"));
   }
 
@@ -503,22 +425,17 @@ public class CalendarGuiControllerTest {
   public void testMultipleOperationsUpdateGui() {
     guiLog.setLength(0);
 
-    // Create event
     LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
     controller.createSingleEvent("Meeting", start, end);
 
-    // Edit event
     controller.editSingleEvent("Meeting", start, end, "location", "Room A");
 
-    // View events
     controller.viewEventsOnDate(LocalDate.of(2025, 1, 15));
 
     String log = guiLog.toString();
-
-    // Verify GUI was updated after each operation
     int displayCount = log.split("displayEvents").length - 1;
-    assertTrue(displayCount >= 3); // At least 3 times
+    assertTrue(displayCount >= 3);
   }
 
   /**
@@ -534,8 +451,155 @@ public class CalendarGuiControllerTest {
 
     String log = guiLog.toString();
 
-    // Verify GUI list was updated after each creation
     int updateCount = log.split("setCalendarNames").length - 1;
     assertEquals(3, updateCount);
   }
+
+  /**
+   *   testcases for improving pit/ jacoco.
+   */
+  @Test
+  public void editCalendarNameNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    controller.editCalendarName("TestCal", "NewName");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void editCalendarTimezoneNullCalendar() {
+    controller.currentCalendar  = null;
+    guiLog.setLength(0);
+    controller.editCalendarTimezone("UTC", "Asia/Tokyo");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void recurringEventWithOccurrencesNull() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
+    Set<DayOfWeekAlphabet> weekdays = new HashSet<>();
+    weekdays.add(DayOfWeekAlphabet.M);
+    controller.createRecurringEventWithOccurrences("pdp", start, end, weekdays, 5);
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void editCalendarNameNull() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    controller.editCalendarName("TestCal", "NewName");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+
+  @Test
+  public void recurringEventUntilDateNull() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
+    Set<DayOfWeekAlphabet> weekdays = new HashSet<>();
+    weekdays.add(DayOfWeekAlphabet.M);
+    LocalDate endDate = LocalDate.of(2025, 3, 1);
+    controller.createRecurringEventUntilDate("Meeting", start, end, weekdays, endDate);
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void editSingleEventNull() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
+    controller.editSingleEvent("Meeting", start, end, "subject", "New");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+
+  @Test
+  public void editEventsFromDateNull() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 1, 15, 11, 0);
+    controller.editEventsFromDate("pdp", start, "location", "dodge");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+
+
+  @Test
+  public void testEditAllInSeriesNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime start = LocalDateTime.of(2025, 1, 15, 10, 0);
+    controller.editAllInSeries("Meeting", start, "subject", "New");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void testViewEventsOnDateNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDate date = LocalDate.of(2025, 1, 15);
+    controller.viewEventsOnDate(date);
+    assertTrue(guiLog.toString().contains("displayEvents: date=2025-01-15"));
+  }
+
+  @Test
+  public void testCheckStatusNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    LocalDateTime dateTime = LocalDateTime.of(2025, 1, 15, 14, 30);
+    controller.checkStatus(dateTime);
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+
+  @Test
+  public void testExportToCsvNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    controller.exportToCsv("calendar.csv");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+
+  @Test
+  public void testExportToIcalNullCalendar() {
+    controller.currentCalendar = null;
+    guiLog.setLength(0);
+    controller.exportToIcal("calendar.ics");
+    assertTrue(guiLog.toString().contains("showError"));
+    assertTrue(guiLog.toString().contains("No calendar selected"));
+  }
+
+  @Test
+  public void testViewEventsOnDateWithNullReturn() {
+    LocalDate date = LocalDate.of(2025, 1, 15);
+    guiLog.setLength(0);
+    controller.viewEventsOnDate(date);
+    assertTrue(guiLog.toString().contains("displayEvents: date=2025-01-15"));
+  }
+
+  @Test
+  public void testUpdateCalendarListWithCurrentCalendar() {
+    controller.createCalendar("NewCal", "UTC");
+    assertTrue(guiLog.toString().contains("setSelectedCalendar"));
+  }
+
+
 }

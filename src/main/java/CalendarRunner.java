@@ -4,8 +4,6 @@ import controller.IcalendarController;
 import java.io.IOException;
 import model.CalendarSystem;
 import model.IcalendarSystem;
-import view.CalendarView;
-import view.IcalendarView;
 
 /**
  * Program runner.

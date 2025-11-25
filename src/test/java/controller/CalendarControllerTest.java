@@ -51,15 +51,9 @@ public class CalendarControllerTest {
     controller.processCommand("create calendar --name TestCal --timezone America/New_York");
     controller.processCommand("use calendar --name TestCal");
 
-    // CRITICAL: After "use calendar", the controller's currentCalendar is now
-    // a DIFFERENT MockIcalendar (created by MockIcalendarSystem.createCalendar)
-    // We need to get a reference to THAT calendar to set exceptions on it
-
-    // Get the actual calendar the controller is using
     try {
       mockCalendar = (MockIcalendar) mockSystem.getCalendar("TestCal");
     } catch (Exception e) {
-      // handle if needed
     }
 
     systemLog.setLength(0);
@@ -112,14 +106,10 @@ public class CalendarControllerTest {
     mockCalendar = new MockIcalendar(calendarLog, 1000);
     mockSystem = new MockIcalendarSystem(systemLog, mockCalendar);
     controller = new CalendarController(mockSystem, mockView, null);
-
-
     controller.processCommand("create calendar --name TestCal --timezone America/New_York");
     controller.processCommand("use calendar --name TestCal");
-
     calendarLog.setLength(0);
     viewLog.setLength(0);
-
     controller.processCommand("show status on 2025-01-15T14:30");
 
     assertEquals("isOccupied: 2025-01-15T14:30" + System.lineSeparator(),
@@ -466,7 +456,6 @@ public class CalendarControllerTest {
     controller.processCommand(
         "copy event Meeting on "
             + "2025-01-15T10:00 extra words --target TargetCal to 2025-01-16T14:00");
-
     assertTrue(viewLog.toString().contains("displayError"));
     assertTrue(viewLog.toString().contains("Invalid source date-time"));
   }
@@ -1406,6 +1395,15 @@ public class CalendarControllerTest {
     assertTrue(content.contains("\"Meeting, Planning\""));
 
     Files.deleteIfExists(Paths.get(path));
+  }
+
+  @Test
+  public void testCreateSingleAllDayEvent2() {
+    controller.processCommand("create event Conference on 2025-01-20");
+    assertTrue(calendarLog.toString().contains("addEvent: Conference"));
+    assertTrue(calendarLog.toString().contains("2025-01-20T08:00"));
+    assertTrue(calendarLog.toString().contains("2025-01-20T17:00"));
+    assertTrue(viewLog.toString().contains("displaySuccess"));
   }
 
 }
