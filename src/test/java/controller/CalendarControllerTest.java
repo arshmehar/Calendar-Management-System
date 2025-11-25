@@ -54,6 +54,7 @@ public class CalendarControllerTest {
     try {
       mockCalendar = (MockIcalendar) mockSystem.getCalendar("TestCal");
     } catch (Exception e) {
+      System.out.println(e.getMessage());
     }
 
     systemLog.setLength(0);

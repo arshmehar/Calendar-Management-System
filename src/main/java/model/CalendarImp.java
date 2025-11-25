@@ -431,9 +431,6 @@ public class CalendarImp implements Icalendar {
       throws DuplicateEventException {
 
     List<EventKey> seriesEvents = eventsBySeries.get(seriesId);
-    if (seriesEvents == null) {
-      return;
-    }
 
     Event lastEvent = seriesEvents.stream()
         .map(eventsByKey::get)
