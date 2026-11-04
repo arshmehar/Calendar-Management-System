@@ -1,114 +1,120 @@
-# Overview
+# Calendar Management System
 
-In this iteration of this project, you will build a view
-for the calendar application, featuring a graphical user interface.
-This will allow a user to interactively create,edit, and view events in
-a digital calendar. The result of this iteration will be a calendar that
-a user can interact with in a text-based interface, a GUI, as well as use scripting in headless mode.
+A multi-calendar desktop application in Java with three ways to use it: a Swing GUI, an interactive command line, and a headless script runner. All three are built on one Model–View–Controller core.
 
-# 1 Graphical View
+![Java](https://img.shields.io/badge/Java-11-orange)
+![Swing](https://img.shields.io/badge/UI-Swing-blue)
+![JUnit](https://img.shields.io/badge/Tests-JUnit%204-green)
+![Build](https://img.shields.io/badge/Build-Gradle-blue)
 
-## 1.1 General Constraints
+![Calendar GUI](res/GUI_Screenshot.PNG)
 
-1. You must use the Java Swing library to build the user interface of this application. To this end, you can use the examples discussed in the view module and any class in the official Java Swing library. You are not allowed to use any component or class that is not part of the JDK. 
+## Overview
 
-2. The GUI should, at a minimum, support a *month view* of a calendar. A month view shows all the days of the current month. A user can navigate to another month in the future or in the past. You are free to add more views (e.g., weekly view, days view, etc.).
+Built as a pair project for **CS5010: Programming Design Paradigm** at Northeastern University. The application grew over several iterations, from a text-based calendar engine to a full GUI, so most of the design work went into keeping the model, controllers, and views independent as new interfaces were added.
 
-3. The GUI must expose features listed and described in the next section.
+### Features
 
-4. The GUI should have support for multiple calendars in any timezone chosen by the user.
+- **Multiple calendars**, each with its own name and IANA timezone (e.g. `America/New_York`, `Asia/Kolkata`). Calendars can be renamed or moved to a new timezone.
+- **Events**: timed, all-day, and multi-day events, with subject, location, description, and public/private status.
+- **Recurring series**: repeat on chosen weekdays (`MTWRFSU`) for *N* occurrences or until an end date.
+- **Scoped editing**: change one event, this event and all future ones, or the whole series.
+- **Copy across calendars**: copy a single event, all events on a day, or a date range into another calendar, with timezone conversion.
+- **Queries**: list events on a day or in a range, and check busy/available status at a given time.
+- **Export** to CSV (Google Calendar format) and iCal.
+- **Three interfaces**: Swing GUI, interactive REPL, and headless mode that runs a script file.
 
-5. You are expected to handle invalid user input via the GUI gracefully. Graceful error handling means that you must detect the cause of the error and inform the user with a useful message that does not leak implementation details but lets the user know how to fix the error.
+## Architecture
 
-6. The layout of the UI should be reasonable. Things should be in proper proportion, and laid out in a reasonable manner. **Buttons/text fields/labels that are oversized, or haphazardly arranged, even if functional, will result in a point deduction.**
+```mermaid
+graph TD
+    Runner[CalendarRunner] --> Modes[ModeManager]
+    Modes --> Interactive[InteractiveModeExecutor]
+    Modes --> Headless[HeadlessModeExecutor]
+    Modes --> GUI[CalendarGuiView - Swing]
 
-7. Each user interaction or user input must be reasonably user-friendly  (e.g. making the user type something when a less error-prone method is  possible is not good UI design). We do not expect snazzy, sophisticated  user-friendly programs. Our standard is: can a user unfamiliar with your code and technical documentation operate the program correctly **without reading your code and technical documentation?**
+    Interactive --> Parser[CommandParser]
+    Headless --> Parser
+    Parser --> Sub[Create / Edit / Copy / Query / Status / Export parsers]
+    Sub --> Parsed[ParsedCommand]
 
-8. Keep in mind that this is a graphical user interface for your program.  It is not a graphical way to use the same interaction as the text mode. The expectations of the user, and what the user is expected to enter, are not the same as when specifying script commands!
+    GUI -- CalendarFeatures --> Controller[CalendarController]
+    Controller --> Parsed
+    Parsed --> Exec[CommandExecutor]
 
-## 1.2 Expected Feature Set
+    Exec --> Model[CalendarSystem]
+    Model --> Cal[CalendarImp - per timezone]
+    Cal --> Ev[Event / EventSeries]
 
-The following features must be usable via your graphical user interface.
+    Exec --> TextView[CalendarView - console]
+    Exec --> Adapter[GuiViewAdapter] --> GUI
+```
 
-1. A user should be able to create a new calendar for a particular timezone.
+**Design decisions**
 
-2. A user should be able to select a calendar and create, edit, view events for the selected calendar.
+- **One command pipeline for every interface.** The GUI builds the same `ParsedCommand` objects the text parser produces, so every feature is implemented once in `CommandExecutor` and works in all three modes.
+- **Adapter pattern.** `GuiViewAdapter` lets the executor, which was written for console output, drive the Swing view (popups, panel refreshes) without knowing about Swing.
+- **Map-based dispatch.** `CommandExecutor` maps each `CommandType` to a handler (`Map<CommandType, Consumer<ParsedCommand>>`) instead of one large `switch`, so adding a command means adding an entry rather than editing a long branch.
+- **Interface-first layers.** The controller, model, and views talk through interfaces (`IcalendarSystem`, `IcalendarView`, `IcalendarGuiView`, `CalendarFeatures`), which is also what makes the mock-based tests possible.
 
-3. A user should know which calendar they are on when interacting with the GUI. The way you distinguish a calendar is upto you. One example would be to color code the different calendars.
+The full class diagram is in [`res/ClassDiagram.png`](res/ClassDiagram.png), and the GUI-iteration design changes are in [`res/Misc.md`](res/Misc.md).
 
-4. A user should not be forced to create a new calendar. Instead, the GUI should allow a user to work with a default calendar in the user's current timezone based on their system setting.
+## Project Structure
 
-5. A user should be able to select a specific day of a month and view all events scheduled on that day in the calendar's timezone.
+```
+src/main/java/
+├── CalendarRunner.java            # entry point, picks the mode from args
+├── controller/                    # parsing, command execution, mode executors, exporters
+│   └── features/CalendarFeatures  # actions the GUI can trigger
+├── model/                         # CalendarSystem, CalendarImp, Event, EventSeries, exceptions
+└── view/
+    ├── CalendarView.java          # console view
+    └── gui/                       # Swing view, dialogs, event panels, adapter
+src/test/java/                     # JUnit tests + mocks for model, view and controller
+res/                               # screenshots, class diagram, example command files
+```
 
-6. A user should be able to create a new event on a selected day of a month. The event can be a single or recurring event. For recurring events, a user should be able to specify the weekdays on which the event will repeat and the frequency in terms of number of occurrences or until an end date.
+## Getting Started
 
-7. A user should be able to select a specific day of a month and edit events.
+**Requirements:** JDK 11+. Gradle is bundled through the wrapper.
 
-The user should be able to identify a single event and edit it. The user should also be able to identify multiple events with the same name, possibly from a user-specific point in time, and edit them together.
+```bash
+./gradlew jar                                                        # builds build/libs/calendar-1.0.jar
 
+java -jar build/libs/calendar-1.0.jar                                # GUI
+java -jar build/libs/calendar-1.0.jar --mode interactive             # REPL
+java -jar build/libs/calendar-1.0.jar --mode headless commands.txt   # run a script
+```
 
-## 1.3 Design Considerations
+### Example commands
 
-Carefully design the interaction between a view and a controller,
-and formalize the interactions with view and controller interfaces.
-You may design a single controller that manages the program in
-interactive, headless and GUI modes. Different controllers for different views are also possible if the views are very different from each other.
-However, be mindful of the MVC principles and separation between  the model, view and controller. When designing, always ask: "can I change one part with no/minimal changes to the others?"
+```text
+create calendar --name fall2025 --timezone America/New_York
+use calendar --name fall2025
+create event "Lunch meeting" from 2025-11-01T12:00 to 2025-11-01T12:30
+create event dbms from 2025-10-27T12:00 to 2025-10-27T12:30 repeats MWF until 2025-11-21
+edit events location dbms from 2025-11-03T12:00 with "Snell Library"
+create calendar --name Spring2026 --timezone America/Los_Angeles
+copy events on 2025-11-01 --target Spring2026 to 2026-01-15
+print events from 2025-10-25T12:00 to 2025-11-25T12:00
+show status on 2025-10-27T12:15
+export cal fall2025.csv
+exit
+```
 
-## 1.4 Testing
+A complete script is in [`res/commands.txt`](res/commands.txt), and examples of rejected input are in [`res/invalid.txt`](res/invalid.txt). For a walkthrough of the GUI with screenshots, see [`USEME.md`](USEME.md).
 
-Think carefully about which parts of the program require testing. For example, you are not expected to test whether a particular button click produces the desired result. In that sense, testing the actual GUI is optional. However, you should test whether the controller does what it is supposed to in reaction to this happening.
+## Testing
 
-# 2 Program Execution
+```bash
+./gradlew test       # 312 JUnit tests, JaCoCo coverage report in build/reports/jacoco
+./gradlew pitest     # mutation testing with PIT
+```
 
-## 2.1 Creating a JAR File
+The controller tests use hand-written mocks of the model and views (`src/test/java/mocks`), so the controller logic is tested without starting Swing or touching real calendars. Code style is enforced with Checkstyle (`config/checkstyle`).
 
-A user should be able to run your application using a JAR file. To create a JAR file run the command ./gradlew jar. This will create a JAR file in the build/libs directory. You can run the jar using the command java -jar build/libs/JARNAME.jar. You can provide arguments after the jar file path.
+## Team
 
-You should assume that the user will run your program from this project's root. You must ensure that file paths that your program relies on are platform independent.
+Pair project by [arshmehar](https://github.com/arshmehar) and [adikejre](https://github.com/adikejre).
 
-## 2.2 Command-line arguments
-
-Your program (from IntelliJ or the JAR file) should accept command-line inputs. Three command-line inputs are valid:
-
-* `java -jar JARNAME.jar --mode headless path-of-script-file`: when invoked in this manner the program should open the script file, execute it and then exit. Invalid commands should be handled gracefully with appropriate error messages. This is how the program worked in the previous iteration.
-
-* `java -jar JARNAME.jar --mode interactive`: when invoked in this manner the program should open in an interactive text mode, allowing the user to type the script and execute it one line at a time. This is how the program worked in the previous iteration.
-
-* `java -jar JARNAME.jar`: when invoked in this manner the program should open the graphical user interface. This is what will happen if you simply double-click on the jar file.
-
-Any other command-line arguments are invalid: in these cases the program should display an error message suitably and quit.
-
-# 3 What to submit
-
-- Submit a res/ folder with the following:
-  - A screenshot showing your GUI. 
-  - A `Misc.md` file with the following information:
-    - `A list of changes to the design of your program, along with a brief justification of each. **Describing changes only in paragraph form will result in a point deduction.**
-    - Which features work and which do not. 
-    - Anything else you need us to know when we grade.
-  - A txt file, commands.txt, with the list of valid commands.
-  - A txt file, invalid.txt with a list of commands where at least one command is invalid.
-- A USEME.md file that contains:
-  - Instructions to run your program in different modes using examples.
-  - a bullet-point list of how to use your GUI to use each operation supported by your program. Screenshots would be helpful, but not necessary.
-- The main method must be in the class 'src/main/java/CalendarRunner.java'.
-- Complete the [anonymous peer evaluation survey](https://forms.gle/11qoosf7ukmVFWuT9). You do not need to take the survey if you are working alone.
-
-# Grading Criteria
-
-1. The completeness, layout, and behavior of your GUI.
-
-2. Whether your design aligns with MVC and SOLID principles.
-
-3. Whether you have addressed issues in the previous version.
-
-4. Well-structured and clean code with relevant documentation.
-
-5. Avoid code smells wherever relevant.
-
-6. Completeness and correctness of your tests as evidenced by running them and coverage metrics for the controller and model.
-
-7. Proper access modifiers.
-
-8. Expected formatting style.
+**My contributions (arshmehar):** the GUI's edit-calendar flow (rename and change timezone), showing the active calendar's timezone in the GUI, error handling for invalid calendar renames, GUI controller tests, and the project-wide Checkstyle compliance pass.
