@@ -16,7 +16,7 @@ A multi-calendar desktop application in Java with three ways to use it: a **Swin
 
 ---
 
-## 🚀 Run the demo
+## Run the demo
 
 **Requirements:** JDK 11+ on your `PATH`. No separate Gradle install is needed. Use the bundled wrapper (`./gradlew` on macOS/Linux, `gradlew.bat` on Windows).
 
@@ -38,7 +38,7 @@ java -jar build/libs/calendar-1.0.jar --mode headless commands.txt   # run a scr
 
 ---
 
-## ✨ Highlights
+## Highlights
 
 - **Three front-ends, one core.** The GUI, the REPL, and the script runner all produce the same `ParsedCommand` objects and go through the same `CommandExecutor`, so every feature is written once and works everywhere.
 - **Timezone-aware calendars.** Each calendar has an IANA timezone. Copying events between calendars converts times correctly, and changing a calendar's timezone moves its events with it.
@@ -48,7 +48,7 @@ java -jar build/libs/calendar-1.0.jar --mode headless commands.txt   # run a scr
 
 ---
 
-## 📋 Features
+## Features
 
 | Area | What you can do |
 |---|---|
@@ -63,7 +63,7 @@ java -jar build/libs/calendar-1.0.jar --mode headless commands.txt   # run a scr
 
 ---
 
-## 🖼️ User Interface
+## User Interface
 
 <table>
   <tr>
@@ -84,7 +84,7 @@ A step-by-step GUI walkthrough is in [`USEME.md`](USEME.md).
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 graph TD
@@ -112,7 +112,7 @@ graph TD
 
 **How a command flows:** text input is split by `CommandParser` into a family-specific parser (create, edit, copy, query, status, export). That parser validates the syntax and builds an immutable `ParsedCommand`. In the GUI, `CalendarController` builds the same `ParsedCommand` from dialog fields. `CommandExecutor` then dispatches it to the model and sends the result to whichever view is active.
 
-### 🎨 Design patterns
+### Design patterns
 
 | Pattern | Where | Why |
 |---|---|---|
@@ -122,7 +122,7 @@ graph TD
 | **Builder** | `ParsedCommand.Builder` | Commands have many optional fields (location, repeat rule, target calendar) |
 | **Strategy** | `ImodeExecutor` → interactive / headless | The input source is swapped without changing the execution logic |
 
-### 🔧 SOLID in practice
+### SOLID in practice
 
 - **Single responsibility:** parsing is split into one parser per command family instead of one large parser.
 - **Open/closed:** `CommandExecutor` dispatches through a `Map<CommandType, Consumer<ParsedCommand>>`, so a new command adds an entry instead of editing a `switch`.
@@ -133,7 +133,7 @@ The full class diagram is in [`res/ClassDiagram.png`](res/ClassDiagram.png), and
 
 ---
 
-## 📝 Command reference
+## Command reference
 
 Dates use `YYYY-MM-DD` and date-times use `YYYY-MM-DDThh:mm`. Subjects with spaces go in quotes.
 
@@ -184,7 +184,7 @@ Example invalid inputs and the errors they produce are in [`res/invalid.txt`](re
 
 ---
 
-## 🧪 Testing & quality
+## Testing & quality
 
 ```bash
 ./gradlew test             # 312 JUnit tests; JaCoCo report in build/reports/jacoco
@@ -198,7 +198,7 @@ Example invalid inputs and the errors they produce are in [`res/invalid.txt`](re
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```
 src/main/java/
@@ -215,7 +215,7 @@ res/                               # screenshots, class diagram, design notes, e
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - [`USEME.md`](USEME.md): how to run each mode and use every GUI feature, with screenshots
 - [`res/Misc.md`](res/Misc.md): design changes made to support the GUI
@@ -223,7 +223,7 @@ res/                               # screenshots, class diagram, design notes, e
 
 ---
 
-## 👥 Team
+## Team
 
 Built as a pair project for **CS5010: Programming Design Paradigm** at Northeastern University by [arshmehar](https://github.com/arshmehar) and [adikejre](https://github.com/adikejre).
 
